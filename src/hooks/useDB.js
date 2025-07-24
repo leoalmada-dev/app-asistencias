@@ -30,3 +30,18 @@ export const actualizarPractica = async (id, practica) => {
 export const eliminarPractica = async (id) => {
   return await db.practicas.delete(id);
 };
+
+// ─── Partidos ─────────────────────
+export const obtenerPartidos = async () => await db.partidos.toArray();
+
+export const agregarPartido = async (partido) => {
+  return await db.partidos.add(partido);
+};
+
+export const actualizarPartido = async (id, partido) => {
+  return await db.partidos.update(id, partido);
+};
+
+export const eliminarPartido = async (id) => {
+  return await db.partidos.delete(id);
+};
