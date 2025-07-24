@@ -13,4 +13,14 @@ db.version(1).stores({
   cambios: '++id, partidoId, entra, sale, minuto'
 });
 
+db.version(2).stores({
+  equipos: '++id, nombre',
+  jugadores: '++id, nombre, numero, posicion, activo, equipoId',
+  practicas: '++id, fecha, hora, lugar, equipoId',
+  partidos: '++id, fecha, tipo, torneo, rival, equipoId',
+  asistencias: '++id, practicaId, jugadorId, presente',
+  participaciones: '++id, partidoId, jugadorId, minutoEntrada, minutoSalida',
+  cambios: '++id, partidoId, entra, sale, minuto'
+});
+
 export default db;

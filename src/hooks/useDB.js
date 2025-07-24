@@ -45,3 +45,8 @@ export const actualizarPartido = async (id, partido) => {
 export const eliminarPartido = async (id) => {
   return await db.partidos.delete(id);
 };
+
+// ─── Equipos ─────────────────────
+export const obtenerEquipos = async () => await db.equipos.toArray();
+
+export const agregarEquipo = async (equipo) => await db.equipos.add(equipo);
