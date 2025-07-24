@@ -1,0 +1,14 @@
+// src/styles/darkmode.scss
+
+body.modo-oscuro {
+  background-color: #121212;
+  color: #e0e0e0;
+}
+
+body.modo-oscuro .card,
+body.modo-oscuro .form-control,
+body.modo-oscuro .list-group-item {
+  background-color: #1e1e1e;
+  color: #e0e0e0;
+  border-color: #333;
+}
