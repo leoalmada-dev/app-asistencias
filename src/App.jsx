@@ -11,6 +11,7 @@ import Equipos from './pages/Equipos';
 import AppWrapper from './AppWrapper';
 import Configuracion from './pages/Configuracion';
 import DetallePractica from './pages/DetallePractica';
+import DetallePartido from './pages/DetallePartido';
 
 export default function App() {
   return (
@@ -28,6 +29,7 @@ export default function App() {
                 <Route path="/estadisticas" element={<Estadisticas />} />
                 <Route path="/equipos" element={<Equipos />} />
                 <Route path="/configuracion" element={<Configuracion />} />
+                <Route path="/partidos/:id" element={<DetallePartido />} />
               </Routes>
             </Layout>
           </AppWrapper>

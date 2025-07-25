@@ -10,6 +10,8 @@ import PartidoForm from "../components/PartidoForm";
 import { Table, Button, Alert } from "react-bootstrap";
 import { FaEdit, FaTrash } from "react-icons/fa";
 import { useEquipo } from "../context/EquipoContext";
+import { FaEye } from "react-icons/fa6";
+import { Link } from "react-router-dom";
 
 export default function Partidos() {
     const [partidos, setPartidos] = useState([]);
@@ -67,10 +69,18 @@ export default function Partidos() {
                             <td>{p.rival}</td>
                             <td>{p.golesFavor} - {p.golesContra}</td>
                             <td>
-                                <Button variant="outline-warning" size="sm" onClick={() => setEditando(p)}>
+                                <Button as={Link} to={`/partidos/${p.id}`} variant="outline-info" size="sm"
+                                        title="Ver detalle"
+                                        className="me-2">
+                                    <FaEye />
+  </Button>
+                                <Button variant="outline-warning" 
+                                className="me-2"
+                                size="sm" onClick={() => setEditando(p)}>
                                     <FaEdit />
-                                </Button>{" "}
-                                <Button variant="outline-danger" size="sm" onClick={() => handleEliminar(p.id)}>
+                                </Button>
+                                <Button variant="outline-danger" 
+                                size="sm" onClick={() => handleEliminar(p.id)}>
                                     <FaTrash />
                                 </Button>
                             </td>

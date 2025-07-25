@@ -65,7 +65,6 @@ export default function Jugadores() {
                         <tr key={j.id}>
                             <td>{j.nombre}</td>
                             <td>{j.numero}</td>
-                            <td>{j.categoria}</td>
                             <td>{j.posicion}</td>
                             <td>{j.activo ? "✔️" : "❌"}</td>
                             <td>
