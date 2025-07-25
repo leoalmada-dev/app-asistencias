@@ -19,7 +19,7 @@ export default function CustomNavbar() {
   return (
     <Navbar expand="lg" bg={modoOscuro ? 'dark' : 'light'} variant={modoOscuro ? 'dark' : 'light'} sticky="top">
       <Container>
-        <Navbar.Brand as={Link} to="/">Fútbol Infantil</Navbar.Brand>
+        <Navbar.Brand as={Link} to="/">Fútbol Asistencias</Navbar.Brand>
 
         <Navbar.Toggle aria-controls="menu-principal" />
         <Navbar.Collapse id="menu-principal">
@@ -28,6 +28,7 @@ export default function CustomNavbar() {
             <Nav.Link as={Link} to="/practicas" active={pathname === "/practicas"}>Prácticas</Nav.Link>
             <Nav.Link as={Link} to="/partidos" active={pathname === "/partidos"}>Partidos</Nav.Link>
             <Nav.Link as={Link} to="/estadisticas" active={pathname === "/estadisticas"}>Estadísticas</Nav.Link>
+            <Nav.Link as={Link} to="/equipos" active={pathname === "/equipos"}>Equipos</Nav.Link>
           </Nav>
 
           <div className="d-flex align-items-center gap-3">
@@ -37,17 +38,20 @@ export default function CustomNavbar() {
                 <FaShirt />
               </InputGroup.Text>
               <Form.Select
-                value={equipoId || ""}
-                onChange={(e) => setEquipoId(parseInt(e.target.value))}
+                size="sm"
+                value={equipoId || (equipos[0]?.id ?? "")}
+                onChange={e => setEquipoId(parseInt(e.target.value))}
+                className="w-auto"
                 title="Seleccionar equipo"
               >
-                <option value="">Equipo</option>
                 {equipos.map((e) => (
-                  <option key={e.id} value={e.id}>{e.nombre}</option>
+                  <option key={e.id} value={e.id}>
+                    <FaShirt style={{ marginRight: 4 }} /> {e.nombre}
+                  </option>
                 ))}
               </Form.Select>
             </InputGroup>
-            
+
             {/* Icono de modo oscuro */}
             <Form.Check
               type="switch"

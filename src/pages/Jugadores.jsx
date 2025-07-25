@@ -7,7 +7,7 @@ import {
     eliminarJugador,
 } from "../hooks/useDB";
 import JugadorForm from "../components/JugadorForm";
-import { Button, Table, Modal } from "react-bootstrap";
+import { Button, Table, Modal, Alert } from "react-bootstrap";
 import { FaEdit, FaTrash } from "react-icons/fa";
 import { useEquipo } from "../context/EquipoContext";
 
@@ -19,17 +19,18 @@ export default function Jugadores() {
 
     const cargar = async () => {
         const lista = await obtenerJugadores();
-        const filtrados = lista.filter(j => j.equipoId === equipoId);
-        setJugadores(filtrados);
+        setJugadores(lista.filter(j => j.equipoId === equipoId));
     };
 
     useEffect(() => {
         cargar();
-    }, []);
+    }, [equipoId]);
+
+    if (!equipoId) return <Alert variant="warning">Debes seleccionar un equipo para usar esta sección.</Alert>;
 
     const handleGuardar = async (jugador) => {
         if (editando) {
-            await actualizarJugador(editando.id, jugador);
+            await actualizarJugador(editando.id, { ...jugador, equipoId });
             setEditando(null);
         } else {
             await agregarJugador({ ...jugador, equipoId });
