@@ -8,6 +8,7 @@ export default function DetallePractica() {
   const navigate = useNavigate();
   const [practica, setPractica] = useState(null);
   const [asistencias, setAsistencias] = useState([]);
+  const [notasEntrenador, setNotasEntrenador] = useState("");
   const [editando, setEditando] = useState(false);
 
   useEffect(() => {
@@ -15,6 +16,7 @@ export default function DetallePractica() {
       const p = lista.find(pr => pr.id === Number(id));
       setPractica(p);
       setAsistencias(p?.asistencias || []);
+      setNotasEntrenador(p?.notasEntrenador || "");
     });
   }, [id]);
 
@@ -35,29 +37,43 @@ export default function DetallePractica() {
   };
 
   const handleSave = async () => {
-    await actualizarPractica(practica.id, { ...practica, asistencias });
+    console.log("Se guarda práctica:", {
+      ...practica,
+      asistencias,
+      notasEntrenador
+    });
+    await actualizarPractica(practica.id, {
+      ...practica,
+      asistencias,
+      notasEntrenador
+    });
+
     setEditando(false);
     // Recargar
     obtenerPracticas().then(lista => {
       const p = lista.find(pr => pr.id === Number(id));
       setPractica(p);
       setAsistencias(p?.asistencias || []);
+      setNotasEntrenador(p?.notasEntrenador || "");
     });
   };
 
   return (
     <div className="container mt-4">
-      <Button variant="outline-secondary" className="mb-3" onClick={() => navigate(-1)}>← Volver</Button>
-      <h4>Detalle de práctica</h4>
-      <p>
+      <Button variant="outline-secondary" className="mb-3" onClick={() => navigate(-1)}>
+        ← Volver
+      </Button>
+      <h4 className="mb-3">Detalle de práctica</h4>
+      <div className="mb-3">
         <b>Fecha:</b> {practica.fecha} <br />
         <b>Hora:</b> {practica.hora} <br />
-        <b>Lugar:</b> {practica.lugar} <br />
-        <b>Observaciones:</b> {practica.observaciones}
-      </p>
+        <b>Lugar:</b> {practica.lugar}
+      </div>
+
+      <hr className="mb-4 mt-3" style={{ borderTop: "2px solid #888" }} />
 
       <h5>Asistencias</h5>
-      <Table bordered hover size="sm">
+      <Table bordered hover size="sm" className="mb-4">
         <thead>
           <tr>
             <th>Jugador</th>
@@ -97,14 +113,42 @@ export default function DetallePractica() {
           ))}
         </tbody>
       </Table>
-      {editando ? (
-        <>
-          <Button variant="success" className="me-2" onClick={handleSave}>Guardar cambios</Button>
-          <Button variant="secondary" onClick={() => setEditando(false)}>Cancelar</Button>
-        </>
-      ) : (
-        <Button variant="warning" onClick={() => setEditando(true)}>Editar asistencias</Button>
-      )}
+
+      <hr className="mb-4 mt-3" style={{ borderTop: "2px solid #888" }} />
+
+      <Form.Group className="mb-4">
+        <Form.Label>Notas del entrenador</Form.Label>
+        {editando ? (
+          <Form.Control
+            as="textarea"
+            rows={3}
+            value={notasEntrenador}
+            onChange={e => setNotasEntrenador(e.target.value)}
+            placeholder="Anotaciones tácticas, incidencias, lesiones, etc."
+          />
+        ) : (
+          <div className="border rounded p-2 bg-light-subtle" style={{ minHeight: 60 }}>
+            {notasEntrenador || <span className="text-muted">Sin notas</span>}
+          </div>
+        )}
+      </Form.Group>
+
+      <div className="d-flex gap-2">
+        {editando ? (
+          <>
+            <Button variant="success" onClick={handleSave}>
+              Guardar cambios
+            </Button>
+            <Button variant="secondary" onClick={() => setEditando(false)}>
+              Cancelar
+            </Button>
+          </>
+        ) : (
+          <Button variant="warning" onClick={() => setEditando(true)}>
+            Editar práctica
+          </Button>
+        )}
+      </div>
     </div>
   );
 }

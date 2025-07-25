@@ -2,6 +2,8 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Layout from './components/Layout';
 import { ThemeProvider } from './context/ThemeContext';
 import { EquipoProvider } from './context/EquipoContext';
+import { migrarObservacionesANotas } from './hooks/useDB';
+import { useEffect } from 'react';
 
 import Jugadores from './pages/Jugadores';
 import Practicas from './pages/Practicas';
@@ -14,6 +16,15 @@ import DetallePractica from './pages/DetallePractica';
 import DetallePartido from './pages/DetallePartido';
 
 export default function App() {
+  useEffect(() => {
+    // Solo corre si no migraste aún
+    if (!localStorage.getItem("migracionNotasHecha")) {
+      migrarObservacionesANotas().then(() => {
+        localStorage.setItem("migracionNotasHecha", "1");
+      });
+    }
+  }, []);
+
   return (
     <ThemeProvider>
       <EquipoProvider>

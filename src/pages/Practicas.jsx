@@ -1,4 +1,3 @@
-// src/pages/Practicas.jsx
 import { useEffect, useState } from "react";
 import {
     obtenerPracticas,
@@ -36,64 +35,101 @@ export default function Practicas() {
         cargar();
     };
 
+    const handleCancelarEdicion = () => setEditando(null);
+
     const handleEliminar = async (id) => {
-        if (confirm("¿Eliminar esta práctica?")) {
+        if (window.confirm("¿Eliminar esta práctica?")) {
             await eliminarPractica(id);
             cargar();
         }
     };
 
-    if (!equipoId) return <Alert variant="warning">Debes seleccionar un equipo para usar esta sección.</Alert>;
+    if (!equipoId)
+        return (
+            <Alert variant="warning">
+                Debes seleccionar un equipo para usar esta sección.
+            </Alert>
+        );
 
     return (
         <div className="container mt-4">
-            <h3>Prácticas</h3>
-            <PracticaForm onSave={handleGuardar} initialData={editando} modoEdicion={!!editando} />
+            <h3 className="mb-3">Prácticas</h3>
+            <div className="mb-4">
+                <h5 className="mb-2">
+                    {editando ? "Editar práctica" : "Registrar práctica"}
+                </h5>
+                <PracticaForm
+                    onSave={handleGuardar}
+                    initialData={editando}
+                    modoEdicion={!!editando}
+                    onCancel={handleCancelarEdicion}
+                />
+            </div>
 
-            <Table striped bordered hover responsive className="mt-4">
-                <thead>
-                    <tr>
-                        <th>Fecha</th>
-                        <th>Hora</th>
-                        <th>Lugar</th>
-                        <th>Observaciones</th>
-                        <th>Asistieron</th>
-                        <th>Acciones</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {practicas.map((p) => {
-                        const presentes = p.asistencias?.filter(a => a.presente).length || 0;
-                        return (
-                            <tr key={p.id}>
-                                <td>{p.fecha}</td>
-                                <td>{p.hora}</td>
-                                <td>{p.lugar}</td>
-                                <td>{p.observaciones}</td>
-                                <td>{presentes}</td>
-                                <td>
-                                    <Button
-                                        as={Link}
-                                        to={`/practicas/${p.id}`}
-                                        variant="outline-info"
-                                        size="sm"
-                                        title="Ver detalle"
-                                        className="me-2"
-                                    >
-                                        <FaEye />
-                                    </Button>
-                                    <Button variant="outline-warning" size="sm" onClick={() => setEditando(p)}>
-                                        <FaEdit />
-                                    </Button>{" "}
-                                    <Button variant="outline-danger" size="sm" onClick={() => handleEliminar(p.id)}>
-                                        <FaTrash />
-                                    </Button>
+            <hr className="my-4" style={{ borderTop: "2px solid #888" }} />
+
+            <div>
+                <h5 className="mb-3">Listado de prácticas</h5>
+                <Table striped bordered hover responsive>
+                    <thead>
+                        <tr>
+                            <th>Fecha</th>
+                            <th>Hora</th>
+                            <th>Lugar</th>
+                            <th>Asistieron</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {practicas.length === 0 ? (
+                            <tr>
+                                <td colSpan={6} className="text-center text-muted">
+                                    No hay prácticas registradas para este equipo.
                                 </td>
                             </tr>
-                        );
-                    })}
-                </tbody>
-            </Table>
+                        ) : (
+                            practicas.map((p) => {
+                                const presentes = p.asistencias?.filter(a => a.presente).length || 0;
+                                return (
+                                    <tr key={p.id}>
+                                        <td>{p.fecha}</td>
+                                        <td>{p.hora}</td>
+                                        <td>{p.lugar}</td>
+                                        <td>{presentes}</td>
+                                        <td>
+                                            <Button
+                                                as={Link}
+                                                to={`/practicas/${p.id}`}
+                                                variant="outline-info"
+                                                size="sm"
+                                                title="Ver detalle"
+                                                className="me-2"
+                                            >
+                                                <FaEye />
+                                            </Button>
+                                            <Button
+                                                variant="outline-warning"
+                                                className="me-2"
+                                                size="sm"
+                                                onClick={() => setEditando(p)}
+                                            >
+                                                <FaEdit />
+                                            </Button>
+                                            <Button
+                                                variant="outline-danger"
+                                                size="sm"
+                                                onClick={() => handleEliminar(p.id)}
+                                            >
+                                                <FaTrash />
+                                            </Button>
+                                        </td>
+                                    </tr>
+                                );
+                            })
+                        )}
+                    </tbody>
+                </Table>
+            </div>
         </div>
     );
 }

@@ -5,70 +5,73 @@
   ],
   "jugadores": [
     { "id": 1, "nombre": "Juan Pérez", "numero": 10, "posicion": "Delantero", "activo": true, "equipoId": 1 },
-    { "id": 2, "nombre": "Mateo López", "numero": 5, "posicion": "Defensa", "activo": true, "equipoId": 1 },
-    { "id": 3, "nombre": "Tomás Silva", "numero": 8, "posicion": "Mediocampo", "activo": true, "equipoId": 2 },
-    { "id": 4, "nombre": "Lucas Rodríguez", "numero": 1, "posicion": "Arquero", "activo": true, "equipoId": 2 }
+    { "id": 2, "nombre": "Lucas Gómez", "numero": 5, "posicion": "Volante", "activo": true, "equipoId": 1 },
+    { "id": 3, "nombre": "Mateo Ruiz", "numero": 1, "posicion": "Arquero", "activo": true, "equipoId": 1 },
+    { "id": 4, "nombre": "Sofía Cabrera", "numero": 7, "posicion": "Defensa", "activo": true, "equipoId": 2 },
+    { "id": 5, "nombre": "Martina Díaz", "numero": 8, "posicion": "Delantera", "activo": true, "equipoId": 2 }
   ],
   "practicas": [
     {
       "id": 1,
-      "fecha": "2025-07-20",
+      "fecha": "2024-07-21",
       "hora": "18:00",
-      "lugar": "Cancha A",
-      "observaciones": "Trabajo físico y técnica",
+      "lugar": "Cancha Municipal",
       "equipoId": 1,
       "asistencias": [
         { "jugadorId": 1, "nombre": "Juan Pérez", "presente": true, "motivo": "" },
-        { "jugadorId": 2, "nombre": "Mateo López", "presente": false, "motivo": "Enfermo" }
-      ]
+        { "jugadorId": 2, "nombre": "Lucas Gómez", "presente": false, "motivo": "Enfermo" },
+        { "jugadorId": 3, "nombre": "Mateo Ruiz", "presente": true, "motivo": "" }
+      ],
+      "notasEntrenador": "Buen trabajo en presión alta. Mejorar salida por banda derecha."
     },
     {
       "id": 2,
-      "fecha": "2025-07-22",
-      "hora": "17:30",
-      "lugar": "Cancha B",
-      "observaciones": "",
+      "fecha": "2024-07-23",
+      "hora": "19:00",
+      "lugar": "Polideportivo",
       "equipoId": 2,
       "asistencias": [
-        { "jugadorId": 3, "nombre": "Tomás Silva", "presente": true, "motivo": "" },
-        { "jugadorId": 4, "nombre": "Lucas Rodríguez", "presente": true, "motivo": "" }
-      ]
+        { "jugadorId": 4, "nombre": "Sofía Cabrera", "presente": true, "motivo": "" },
+        { "jugadorId": 5, "nombre": "Martina Díaz", "presente": true, "motivo": "" }
+      ],
+      "notasEntrenador": "Ejercicios de definición y coordinación defensiva."
     }
   ],
   "partidos": [
     {
       "id": 1,
-      "fecha": "2025-07-27",
-      "hora": "15:00",
-      "tipo": "campeonato",
-      "torneo": "Liga Infantil 2025",
-      "rival": "Los Halcones",
-      "golesFavor": 2,
-      "golesContra": 1,
+      "fecha": "2024-07-27",
+      "tipo": "amistoso",
+      "torneo": "",
+      "rival": "Cerro 2014",
       "equipoId": 1,
+      "golesFavor": 3,
+      "golesContra": 1,
       "participaciones": [
-        { "jugadorId": 1, "minutoEntrada": 0, "minutoSalida": 60 },
-        { "jugadorId": 2, "minutoEntrada": 0, "minutoSalida": 30 }
+        { "jugadorId": 1, "minutoEntrada": 0, "minutoSalida": 70, "goles": 2 },
+        { "jugadorId": 2, "minutoEntrada": 0, "minutoSalida": 60, "goles": 1 },
+        { "jugadorId": 3, "minutoEntrada": 0, "minutoSalida": 70, "goles": 0 }
       ],
       "cambios": [
-        { "entra": 2, "sale": 1, "minuto": 30 }
-      ]
+        { "entra": 2, "sale": 1, "minuto": 60 }
+      ],
+      "notasEntrenador": "El equipo mostró carácter. Juan estuvo imparable arriba."
     },
     {
       "id": 2,
-      "fecha": "2025-07-28",
-      "hora": "16:00",
-      "tipo": "amistoso",
-      "torneo": "",
-      "rival": "Peñarol 2015",
-      "golesFavor": 1,
-      "golesContra": 3,
+      "fecha": "2024-07-28",
+      "tipo": "campeonato",
+      "torneo": "Copa Sub-10",
+      "rival": "Danubio 2015",
       "equipoId": 2,
+      "golesFavor": 2,
+      "golesContra": 2,
       "participaciones": [
-        { "jugadorId": 3, "minutoEntrada": 0, "minutoSalida": 60 },
-        { "jugadorId": 4, "minutoEntrada": 0, "minutoSalida": 60 }
+        { "jugadorId": 4, "minutoEntrada": 0, "minutoSalida": 70, "goles": 0 },
+        { "jugadorId": 5, "minutoEntrada": 0, "minutoSalida": 70, "goles": 2 }
       ],
-      "cambios": []
+      "cambios": [],
+      "notasEntrenador": "Remontada en el segundo tiempo, gran partido de Martina."
     }
   ]
 }

@@ -55,3 +55,14 @@ export const actualizarEquipo = async (id, equipo) => await db.equipos.update(id
 
 export const eliminarEquipo = async (id) => await db.equipos.delete(id);
 
+export const migrarObservacionesANotas = async () => {
+  const practicas = await db.practicas.toArray();
+  for (const p of practicas) {
+    if (p.observaciones !== undefined) {
+      await db.practicas.update(p.id, {
+        notasEntrenador: p.observaciones,
+      });
+    }
+  }
+  console.log("Migración de observaciones a notasEntrenador completada.");
+};

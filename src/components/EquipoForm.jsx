@@ -1,19 +1,23 @@
-// src/components/EquipoForm.jsx
 import { Form, Button } from "react-bootstrap";
 import { useState, useEffect } from "react";
 
-export default function EquipoForm({ onSave, initialData = {}, modoEdicion = false }) {
+export default function EquipoForm({
+    onSave,
+    initialData = {},
+    modoEdicion = false,
+    onCancel
+}) {
     const [nombre, setNombre] = useState("");
 
     useEffect(() => {
         setNombre(initialData?.nombre || "");
-    }, [initialData]);
+    }, [initialData, modoEdicion]);
 
     const handleSubmit = (e) => {
         e.preventDefault();
         if (!nombre.trim()) return alert("El nombre es obligatorio.");
         onSave({ nombre: nombre.trim() });
-        setNombre("");
+        if (!modoEdicion) setNombre("");
     };
 
     return (
@@ -27,9 +31,16 @@ export default function EquipoForm({ onSave, initialData = {}, modoEdicion = fal
                     autoFocus
                 />
             </Form.Group>
-            <Button type="submit" className="mt-2" variant={modoEdicion ? "warning" : "primary"}>
-                {modoEdicion ? "Actualizar" : "Crear"}
-            </Button>
+            <div className="d-flex gap-2 align-items-center mt-3">
+                <Button type="submit" variant={modoEdicion ? "warning" : "primary"}>
+                    {modoEdicion ? "Actualizar" : "Crear"}
+                </Button>
+                {modoEdicion && onCancel && (
+                    <Button variant="secondary" onClick={onCancel}>
+                        Cancelar edición
+                    </Button>
+                )}
+            </div>
         </Form>
     );
 }

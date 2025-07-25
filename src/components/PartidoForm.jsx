@@ -1,10 +1,9 @@
-// src/components/PartidoForm.jsx
 import { useEffect, useState } from "react";
 import { Form, Button, Row, Col, Table } from "react-bootstrap";
 import { obtenerJugadores } from "../hooks/useDB";
 import { useEquipo } from "../context/EquipoContext";
 
-export default function PartidoForm({ onSave, initialData = {}, modoEdicion = false }) {
+export default function PartidoForm({ onSave, initialData = {}, modoEdicion = false, onCancel }) {
     const [form, setForm] = useState({
         fecha: "",
         hora: "",
@@ -20,21 +19,54 @@ export default function PartidoForm({ onSave, initialData = {}, modoEdicion = fa
     const [jugadores, setJugadores] = useState([]);
     const { equipoId } = useEquipo();
 
-    useEffect(() => {
-        obtenerJugadores().then(setJugadores);
-    }, []);
-
+    // Carga jugadores cada vez que cambia el equipo seleccionado
     useEffect(() => {
         obtenerJugadores().then(js => {
             setJugadores(js.filter(j => j.equipoId === equipoId));
         });
     }, [equipoId]);
 
+    // Autocompletar al editar
+    useEffect(() => {
+        if (modoEdicion && initialData) {
+            setForm({
+                fecha: initialData.fecha || "",
+                hora: initialData.hora || "",
+                tipo: initialData.tipo || "amistoso",
+                torneo: initialData.torneo || "",
+                rival: initialData.rival || "",
+                golesFavor: initialData.golesFavor ?? 0,
+                golesContra: initialData.golesContra ?? 0,
+                participaciones: initialData.participaciones
+                    ? initialData.participaciones.map(p => ({
+                        ...p,
+                        goles: p.goles ?? 0
+                    }))
+                    : [],
+                cambios: initialData.cambios ?? [],
+            });
+        } else if (!modoEdicion) {
+            setForm({
+                fecha: "",
+                hora: "",
+                tipo: "amistoso",
+                torneo: "",
+                rival: "",
+                golesFavor: 0,
+                golesContra: 0,
+                participaciones: [],
+                cambios: [],
+            });
+        }
+    }, [initialData, modoEdicion]);
+
+    // Manejo de cambios generales
     const handleChange = (e) => {
         const { name, value } = e.target;
         setForm({ ...form, [name]: value });
     };
 
+    // Participaciones (incluyendo goles)
     const handleParticipacionChange = (index, campo, valor) => {
         const nuevas = [...form.participaciones];
         nuevas[index][campo] = valor;
@@ -42,9 +74,12 @@ export default function PartidoForm({ onSave, initialData = {}, modoEdicion = fa
     };
 
     const agregarParticipante = () => {
-        setForm((f) => ({
+        setForm(f => ({
             ...f,
-            participaciones: [...f.participaciones, { jugadorId: "", minutoEntrada: 0, minutoSalida: 70 }]
+            participaciones: [
+                ...f.participaciones,
+                { jugadorId: "", minutoEntrada: 0, minutoSalida: 70, goles: 0 }
+            ]
         }));
     };
 
@@ -57,17 +92,19 @@ export default function PartidoForm({ onSave, initialData = {}, modoEdicion = fa
     const handleSubmit = (e) => {
         e.preventDefault();
         onSave(form);
-        setForm({
-            fecha: "",
-            hora: "",
-            tipo: "amistoso",
-            torneo: "",
-            rival: "",
-            golesFavor: 0,
-            golesContra: 0,
-            participaciones: [],
-            cambios: [],
-        });
+        if (!modoEdicion) {
+            setForm({
+                fecha: "",
+                hora: "",
+                tipo: "amistoso",
+                torneo: "",
+                rival: "",
+                golesFavor: 0,
+                golesContra: 0,
+                participaciones: [],
+                cambios: [],
+            });
+        }
     };
 
     return (
@@ -123,8 +160,12 @@ export default function PartidoForm({ onSave, initialData = {}, modoEdicion = fa
                 </Col>
             </Row>
 
-            <h5>Participaciones</h5>
-            <Button size="sm" onClick={agregarParticipante}>Agregar jugador</Button>
+            <div className="mb-2 mt-3">
+                <h5>Participaciones</h5>
+                <Button size="sm" variant="outline-success" type="button" onClick={agregarParticipante}>
+                    + Agregar jugador
+                </Button>
+            </div>
 
             <Table size="sm" bordered hover className="mt-2">
                 <thead>
@@ -132,6 +173,7 @@ export default function PartidoForm({ onSave, initialData = {}, modoEdicion = fa
                         <th>Jugador</th>
                         <th>Minuto entrada</th>
                         <th>Minuto salida</th>
+                        <th>Goles</th>
                         <th></th>
                     </tr>
                 </thead>
@@ -164,16 +206,34 @@ export default function PartidoForm({ onSave, initialData = {}, modoEdicion = fa
                                 />
                             </td>
                             <td>
-                                <Button variant="danger" size="sm" onClick={() => eliminarParticipante(i)}>X</Button>
+                                <Form.Control
+                                    type="number"
+                                    min={0}
+                                    value={p.goles || 0}
+                                    onChange={e => handleParticipacionChange(i, 'goles', parseInt(e.target.value) || 0)}
+                                    style={{ width: 70 }}
+                                />
+                            </td>
+                            <td>
+                                <Button variant="danger" size="sm" type="button" onClick={() => eliminarParticipante(i)}>
+                                    X
+                                </Button>
                             </td>
                         </tr>
                     ))}
                 </tbody>
             </Table>
 
-            <Button type="submit" variant={modoEdicion ? "warning" : "primary"}>
-                {modoEdicion ? "Actualizar partido" : "Registrar partido"}
-            </Button>
+            <div className="d-flex gap-2 align-items-center mt-3">
+                <Button type="submit" variant={modoEdicion ? "warning" : "primary"}>
+                    {modoEdicion ? "Actualizar" : "Registrar partido"}
+                </Button>
+                {modoEdicion && onCancel && (
+                    <Button variant="secondary" onClick={onCancel}>
+                        Cancelar
+                    </Button>
+                )}
+            </div>
         </Form>
     );
 }

@@ -1,62 +1,99 @@
-// src/components/PracticaForm.jsx
 import { useEffect, useState } from "react";
 import { Form, Button, Row, Col, Table } from "react-bootstrap";
 import { obtenerJugadores } from "../hooks/useDB";
 import { useEquipo } from "../context/EquipoContext";
 
-export default function PracticaForm({ onSave, initialData = {}, modoEdicion = false }) {
+export default function PracticaForm({
+    onSave,
+    initialData = {},
+    modoEdicion = false,
+    onCancel
+}) {
     const [form, setForm] = useState({
         fecha: "",
         hora: "",
         lugar: "",
-        observaciones: "",
         asistencias: [],
     });
 
     const [jugadores, setJugadores] = useState([]);
     const { equipoId } = useEquipo();
 
+    // Cargar jugadores cuando cambia equipo
     useEffect(() => {
         obtenerJugadores().then(js => {
             setJugadores(js.filter(j => j.equipoId === equipoId));
         });
     }, [equipoId]);
 
+    // Sincroniza formulario con datos iniciales (edición) o genera asistencias por defecto (nuevo)
     useEffect(() => {
-        if (initialData && initialData.asistencias) {
-            setForm({ ...form, ...initialData });
-        } else {
+        if (modoEdicion && initialData && initialData.asistencias) {
+            setForm({
+                fecha: initialData.fecha || "",
+                hora: initialData.hora || "",
+                lugar: initialData.lugar || "",
+                asistencias: initialData.asistencias.map(a => ({
+                    jugadorId: a.jugadorId,
+                    nombre: a.nombre,
+                    presente: a.presente ?? true,
+                    motivo: a.motivo || ""
+                }))
+            });
+        } else if (!modoEdicion && jugadores.length > 0) {
             const asistenciasIniciales = jugadores.map((j) => ({
                 jugadorId: j.id,
                 nombre: j.nombre,
                 presente: true,
                 motivo: "",
             }));
-            setForm((f) => ({ ...f, asistencias: asistenciasIniciales }));
+            setForm(f => ({
+                ...f,
+                asistencias: asistenciasIniciales
+            }));
         }
-    }, [jugadores]);
+    // eslint-disable-next-line
+    }, [initialData, modoEdicion, jugadores]);
 
     const handleFormChange = (e) => {
         const { name, value } = e.target;
-        setForm({ ...form, [name]: value });
+        setForm(f => ({ ...f, [name]: value }));
     };
 
     const togglePresente = (index) => {
-        const nuevas = [...form.asistencias];
-        nuevas[index].presente = !nuevas[index].presente;
-        setForm({ ...form, asistencias: nuevas });
+        setForm(f => {
+            const nuevas = [...f.asistencias];
+            nuevas[index].presente = !nuevas[index].presente;
+            // Si se marca presente, limpia motivo
+            if (nuevas[index].presente) nuevas[index].motivo = "";
+            return { ...f, asistencias: nuevas };
+        });
     };
 
     const cambiarMotivo = (index, motivo) => {
-        const nuevas = [...form.asistencias];
-        nuevas[index].motivo = motivo;
-        setForm({ ...form, asistencias: nuevas });
+        setForm(f => {
+            const nuevas = [...f.asistencias];
+            nuevas[index].motivo = motivo;
+            return { ...f, asistencias: nuevas };
+        });
     };
 
     const handleSubmit = (e) => {
         e.preventDefault();
         onSave(form);
-        setForm({ fecha: "", hora: "", lugar: "", observaciones: "", asistencias: [] });
+        if (!modoEdicion) {
+            setForm({
+                fecha: "",
+                hora: "",
+                lugar: "",
+                asistencias: jugadores.map((j) => ({
+                    jugadorId: j.id,
+                    nombre: j.nombre,
+                    presente: true,
+                    motivo: "",
+                }))
+            });
+        }
     };
 
     return (
@@ -65,25 +102,34 @@ export default function PracticaForm({ onSave, initialData = {}, modoEdicion = f
                 <Col md={3}>
                     <Form.Group className="mb-3">
                         <Form.Label>Fecha</Form.Label>
-                        <Form.Control type="date" name="fecha" value={form.fecha} onChange={handleFormChange} required />
-                    </Form.Group>
-                </Col>
-                <Col md={2}>
-                    <Form.Group className="mb-3">
-                        <Form.Label>Hora</Form.Label>
-                        <Form.Control type="time" name="hora" value={form.hora} onChange={handleFormChange} />
-                    </Form.Group>
-                </Col>
-                <Col md={4}>
-                    <Form.Group className="mb-3">
-                        <Form.Label>Lugar</Form.Label>
-                        <Form.Control name="lugar" value={form.lugar} onChange={handleFormChange} />
+                        <Form.Control
+                            type="date"
+                            name="fecha"
+                            value={form.fecha}
+                            onChange={handleFormChange}
+                            required
+                        />
                     </Form.Group>
                 </Col>
                 <Col md={3}>
                     <Form.Group className="mb-3">
-                        <Form.Label>Observaciones</Form.Label>
-                        <Form.Control name="observaciones" value={form.observaciones} onChange={handleFormChange} />
+                        <Form.Label>Hora</Form.Label>
+                        <Form.Control
+                            type="time"
+                            name="hora"
+                            value={form.hora}
+                            onChange={handleFormChange}
+                        />
+                    </Form.Group>
+                </Col>
+                <Col md={6}>
+                    <Form.Group className="mb-3">
+                        <Form.Label>Lugar</Form.Label>
+                        <Form.Control
+                            name="lugar"
+                            value={form.lugar}
+                            onChange={handleFormChange}
+                        />
                     </Form.Group>
                 </Col>
             </Row>
@@ -99,7 +145,7 @@ export default function PracticaForm({ onSave, initialData = {}, modoEdicion = f
                 </thead>
                 <tbody>
                     {form.asistencias.map((a, i) => (
-                        <tr key={i}>
+                        <tr key={a.jugadorId || i}>
                             <td>{a.nombre}</td>
                             <td>
                                 <Form.Check
@@ -123,9 +169,16 @@ export default function PracticaForm({ onSave, initialData = {}, modoEdicion = f
                 </tbody>
             </Table>
 
-            <Button type="submit" variant={modoEdicion ? "warning" : "primary"}>
-                {modoEdicion ? "Actualizar práctica" : "Registrar práctica"}
-            </Button>
+            <div className="d-flex gap-2 align-items-center mt-3">
+                <Button type="submit" variant={modoEdicion ? "warning" : "primary"}>
+                    {modoEdicion ? "Actualizar" : "Registrar práctica"}
+                </Button>
+                {modoEdicion && onCancel && (
+                    <Button variant="secondary" onClick={onCancel}>
+                        Cancelar
+                    </Button>
+                )}
+            </div>
         </Form>
     );
 }
