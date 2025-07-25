@@ -55,7 +55,6 @@ export default function Jugadores() {
                     <tr>
                         <th>Nombre</th>
                         <th>Nro</th>
-                        <th>Categoría</th>
                         <th>Posición</th>
                         <th>Activo</th>
                         <th>Acciones</th>

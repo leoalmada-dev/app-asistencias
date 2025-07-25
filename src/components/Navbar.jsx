@@ -29,6 +29,7 @@ export default function CustomNavbar() {
             <Nav.Link as={Link} to="/partidos" active={pathname === "/partidos"}>Partidos</Nav.Link>
             <Nav.Link as={Link} to="/estadisticas" active={pathname === "/estadisticas"}>Estadísticas</Nav.Link>
             <Nav.Link as={Link} to="/equipos" active={pathname === "/equipos"}>Equipos</Nav.Link>
+            <Nav.Link as={Link} to="/configuracion" active={pathname === "/configuracion"}>Configuración</Nav.Link>
           </Nav>
 
           <div className="d-flex align-items-center gap-3">
@@ -46,7 +47,7 @@ export default function CustomNavbar() {
               >
                 {equipos.map((e) => (
                   <option key={e.id} value={e.id}>
-                    <FaShirt style={{ marginRight: 4 }} /> {e.nombre}
+                    {e.nombre}
                   </option>
                 ))}
               </Form.Select>

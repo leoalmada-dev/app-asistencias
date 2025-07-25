@@ -1,7 +1,7 @@
 // src/components/Layout.jsx
 import Navbar from './Navbar';
 import { Container } from 'react-bootstrap';
-import SelectorEquipo from './SelectorEquipo';
+import Backup from './Backup';
 
 export default function Layout({ children }) {
   return (

@@ -1,0 +1,74 @@
+{
+  "equipos": [
+    { "id": 1, "nombre": "2014" },
+    { "id": 2, "nombre": "2015" }
+  ],
+  "jugadores": [
+    { "id": 1, "nombre": "Juan Pérez", "numero": 10, "posicion": "Delantero", "activo": true, "equipoId": 1 },
+    { "id": 2, "nombre": "Mateo López", "numero": 5, "posicion": "Defensa", "activo": true, "equipoId": 1 },
+    { "id": 3, "nombre": "Tomás Silva", "numero": 8, "posicion": "Mediocampo", "activo": true, "equipoId": 2 },
+    { "id": 4, "nombre": "Lucas Rodríguez", "numero": 1, "posicion": "Arquero", "activo": true, "equipoId": 2 }
+  ],
+  "practicas": [
+    {
+      "id": 1,
+      "fecha": "2025-07-20",
+      "hora": "18:00",
+      "lugar": "Cancha A",
+      "observaciones": "Trabajo físico y técnica",
+      "equipoId": 1,
+      "asistencias": [
+        { "jugadorId": 1, "nombre": "Juan Pérez", "presente": true, "motivo": "" },
+        { "jugadorId": 2, "nombre": "Mateo López", "presente": false, "motivo": "Enfermo" }
+      ]
+    },
+    {
+      "id": 2,
+      "fecha": "2025-07-22",
+      "hora": "17:30",
+      "lugar": "Cancha B",
+      "observaciones": "",
+      "equipoId": 2,
+      "asistencias": [
+        { "jugadorId": 3, "nombre": "Tomás Silva", "presente": true, "motivo": "" },
+        { "jugadorId": 4, "nombre": "Lucas Rodríguez", "presente": true, "motivo": "" }
+      ]
+    }
+  ],
+  "partidos": [
+    {
+      "id": 1,
+      "fecha": "2025-07-27",
+      "hora": "15:00",
+      "tipo": "campeonato",
+      "torneo": "Liga Infantil 2025",
+      "rival": "Los Halcones",
+      "golesFavor": 2,
+      "golesContra": 1,
+      "equipoId": 1,
+      "participaciones": [
+        { "jugadorId": 1, "minutoEntrada": 0, "minutoSalida": 60 },
+        { "jugadorId": 2, "minutoEntrada": 0, "minutoSalida": 30 }
+      ],
+      "cambios": [
+        { "entra": 2, "sale": 1, "minuto": 30 }
+      ]
+    },
+    {
+      "id": 2,
+      "fecha": "2025-07-28",
+      "hora": "16:00",
+      "tipo": "amistoso",
+      "torneo": "",
+      "rival": "Peñarol 2015",
+      "golesFavor": 1,
+      "golesContra": 3,
+      "equipoId": 2,
+      "participaciones": [
+        { "jugadorId": 3, "minutoEntrada": 0, "minutoSalida": 60 },
+        { "jugadorId": 4, "minutoEntrada": 0, "minutoSalida": 60 }
+      ],
+      "cambios": []
+    }
+  ]
+}

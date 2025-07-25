@@ -8,8 +8,9 @@ import {
 } from "../hooks/useDB";
 import PracticaForm from "../components/PracticaForm";
 import { Table, Button, Alert } from "react-bootstrap";
-import { FaEdit, FaTrash } from "react-icons/fa";
+import { FaEdit, FaTrash, FaEye } from "react-icons/fa";
 import { useEquipo } from "../context/EquipoContext";
+import { Link } from "react-router-dom";
 
 export default function Practicas() {
     const [practicas, setPracticas] = useState([]);
@@ -71,6 +72,16 @@ export default function Practicas() {
                                 <td>{p.observaciones}</td>
                                 <td>{presentes}</td>
                                 <td>
+                                    <Button
+                                        as={Link}
+                                        to={`/practicas/${p.id}`}
+                                        variant="outline-info"
+                                        size="sm"
+                                        title="Ver detalle"
+                                        className="me-2"
+                                    >
+                                        <FaEye />
+                                    </Button>
                                     <Button variant="outline-warning" size="sm" onClick={() => setEditando(p)}>
                                         <FaEdit />
                                     </Button>{" "}
