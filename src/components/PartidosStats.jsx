@@ -216,17 +216,17 @@ export default function PartidosStats() {
             {/* Resumen */}
             <Row className="mb-4">
                 <Col md={4}>
-                    <Badge bg="primary" className="fs-6 p-2 w-100">
+                    <Badge bg="primary" className="fs-6 p-2 w-100 my-1">
                         Partidos jugados: <b>{resumen.totalPartidos}</b>
                     </Badge>
                 </Col>
                 <Col md={4}>
-                    <Badge bg="success" className="fs-6 p-2 w-100">
+                    <Badge bg="success" className="fs-6 p-2 w-100 my-1">
                         Goles a favor: <b>{resumen.totalGoles}</b>
                     </Badge>
                 </Col>
                 <Col md={4}>
-                    <Badge bg="danger" className="fs-6 p-2 w-100">
+                    <Badge bg="danger" className="fs-6 p-2 w-100 my-1">
                         Goles en contra: <b>{resumen.totalGolesContra}</b>
                     </Badge>
                 </Col>

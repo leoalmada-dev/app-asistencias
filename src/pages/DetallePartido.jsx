@@ -21,8 +21,12 @@ export default function DetallePartido() {
       setParticipaciones(partidoSel?.participaciones || []);
       setCambios(partidoSel?.cambios || []);
       setNotasEntrenador(partidoSel?.notasEntrenador || "");
+      // Filtrar jugadores por equipo del partido seleccionado
+      obtenerJugadores().then(jugs => {
+        const jugadoresEquipo = partidoSel ? jugs.filter(j => j.equipoId === partidoSel.equipoId) : [];
+        setJugadores(jugadoresEquipo);
+      });
     });
-    obtenerJugadores().then(setJugadores);
   }, [id]);
 
   if (!partido) return <Alert variant="warning">Partido no encontrado</Alert>;
@@ -76,6 +80,11 @@ export default function DetallePartido() {
       setParticipaciones(partidoSel?.participaciones || []);
       setCambios(partidoSel?.cambios || []);
       setNotasEntrenador(partidoSel?.notasEntrenador || "");
+      // Filtrar jugadores por equipo del partido actualizado
+      obtenerJugadores().then(jugs => {
+        const jugadoresEquipo = partidoSel ? jugs.filter(j => j.equipoId === partidoSel.equipoId) : [];
+        setJugadores(jugadoresEquipo);
+      });
     });
   };
 
@@ -83,10 +92,10 @@ export default function DetallePartido() {
   const totalParticipantes = participaciones.filter(p => p.jugadorId).length;
   const minutosPromedio = participaciones.length
     ? Math.round(
-        participaciones
-          .map(p => (parseInt(p.minutoSalida) - parseInt(p.minutoEntrada)))
-          .reduce((a, b) => a + b, 0) / participaciones.length
-      )
+      participaciones
+        .map(p => (parseInt(p.minutoSalida) - parseInt(p.minutoEntrada)))
+        .reduce((a, b) => a + b, 0) / participaciones.length
+    )
     : 0;
   const goleadores = participaciones.filter(p => p.goles > 0);
 
