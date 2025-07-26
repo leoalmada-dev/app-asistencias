@@ -1,0 +1,59 @@
+Análisis: Lo que se puede mejorar/profesionalizar aún más
+
+A. Funcionalidades posibles a agregar
+
+Control de asistencias a partidos:
+Así como llevás las prácticas, podrías registrar para cada partido qué jugadores estuvieron presentes, quiénes faltaron y con qué motivo.
+
+Útil para tener estadísticas de "convocados vs presentes".
+
+Registro de lesiones o suspensiones:
+Un pequeño apartado en el jugador para anotar si está lesionado/suspendido, con fecha de inicio/fin, lo que podría alertar al DT.
+
+Historial de rendimiento individual:
+Al entrar en el perfil de un jugador, mostrar sus estadísticas históricas: partidos jugados, goles, asistencias, minutos, % asistencia, etc., con gráficos.
+
+Gestión de roles de usuario:
+Pensando a futuro (por si alguien más usa la app), podrías tener roles: Administrador, DT, Colaborador (lectura sola), etc.
+
+Mejora en gestión de partidos:
+
+Permitir guardar "alineaciones" tipo, esquemas, posiciones específicas en cada partido.
+
+Adjuntar foto de planilla/foto del partido.
+
+Añadir incidencias: tarjetas, expulsiones, penales, etc.
+
+Notificaciones/local reminders:
+Como PWA, podrías programar recordatorios para prácticas/partidos (ideal para entrenadores).
+
+Sincronización en la nube (futuro):
+Permitir que los datos se sincronicen entre varios dispositivos (Firebase/Backend propio) si alguna vez la escala lo justifica.
+
+B. Detalles de profesionalización
+Testing: Comenzar a agregar tests automáticos (unitarios/componentes) para los hooks y utilidades.
+
+Docs y ayuda: Agregar una sección de "Ayuda" en la app o un README interno bien documentado para onboarding rápido de nuevos usuarios o futuros desarrolladores.
+
+Control de versiones: Si todavía no está, migrar el control de datos "críticos" a algún backend cuando la app lo requiera.
+
+Soporte multi-club/categoría: Ya lo tenés en mente, pero podés escalar para permitir manejo de varios clubes en la misma app.
+
+Exportación PDF: Además de Excel/PNG, permitir exportar informes completos en PDF, ideal para presentaciones o informes a padres/dirigentes.
+
+🚦 ¿Qué camino seguir ahora?
+Sugerencias ordenadas:
+Pulir detalles actuales
+Revisar que cada flujo (partidos, prácticas, jugadores) esté bien cubierto y sin bugs.
+
+Agregar historial individual:
+Permite que el DT vea estadísticas y evolución por jugador.
+
+Control de ausencias/lesiones en partidos:
+Fundamental para gestión real de plantel.
+
+Explorar funcionalidades offline first:
+Aprovechar el PWA: notificaciones, trabajo offline robusto, etc.
+
+Escalar a multiusuario y/o nube (largo plazo):
+Cuando la app lo requiera por crecimiento, pensar en login y backend.
