@@ -10,6 +10,7 @@ import { Table, Button, Alert } from "react-bootstrap";
 import { FaEdit, FaTrash, FaEye } from "react-icons/fa";
 import { useEquipo } from "../context/EquipoContext";
 import { Link } from "react-router-dom";
+import { FaDumbbell } from "react-icons/fa6";
 
 export default function Practicas() {
     const [practicas, setPracticas] = useState([]);
@@ -53,7 +54,10 @@ export default function Practicas() {
 
     return (
         <div className="container mt-4">
-            <h3 className="mb-3">Prácticas</h3>
+            <h3 className="mb-3 d-flex align-items-center">
+                <FaDumbbell className="me-2" />
+                Prácticas
+            </h3>
             <div className="mb-4">
                 <h5 className="mb-2">
                     {editando ? "Editar práctica" : "Registrar práctica"}

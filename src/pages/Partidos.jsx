@@ -11,6 +11,7 @@ import { Table, Button, Alert } from "react-bootstrap";
 import { FaEdit, FaTrash, FaEye } from "react-icons/fa";
 import { useEquipo } from "../context/EquipoContext";
 import { Link } from "react-router-dom";
+import { FaFutbol } from "react-icons/fa";
 
 export default function Partidos() {
     const [partidos, setPartidos] = useState([]);
@@ -56,7 +57,10 @@ export default function Partidos() {
 
     return (
         <div className="container mt-4">
-            <h3 className="mb-3">Partidos</h3>
+            <h3 className="mb-3 d-flex align-items-center">
+                <FaFutbol className="me-2" />
+                Prácticas
+            </h3>
 
             {/* Alerta si NO hay jugadores */}
             {sinJugadores && (
@@ -69,7 +73,31 @@ export default function Partidos() {
                 </Alert>
             )}
 
-            {/* Lista de partidos primero */}
+            {/* Formulario de partido */}
+            <div className="mb-4">
+                <h5 className="mb-2">{editando ? "Editar partido" : "Registrar partido"}</h5>
+                {!sinJugadores && (
+                    <>
+                        <PartidoForm
+                            onSave={handleGuardar}
+                            initialData={editando}
+                            modoEdicion={!!editando}
+                            onCancel={handleCancelarEdicion}
+                        />
+                    </>
+                )}
+                {/* Comentario sutil abajo del form */}
+                <div className="mt-3 small text-secondary">
+                    <span>
+                        <b>Tip:</b> Cargá todos los jugadores antes de registrar partidos para poder asignar participaciones y cambios correctamente.
+                    </span>
+                </div>
+            </div>
+
+            {/* Separador visual */}
+            <hr className="my-4" style={{ borderTop: "2px solid #888" }} />
+
+            {/* Lista de partidos */}
             <div>
                 <h5 className="mb-3">Lista de partidos registrados</h5>
                 <Table striped bordered hover responsive>
@@ -117,30 +145,6 @@ export default function Partidos() {
                         )}
                     </tbody>
                 </Table>
-            </div>
-
-            {/* Separador visual */}
-            <hr className="my-4" style={{ borderTop: "2px solid #888" }} />
-
-            {/* Formulario de partido */}
-            <div className="mb-4">
-                <h5 className="mb-2">{editando ? "Editar partido" : "Registrar partido"}</h5>
-                {!sinJugadores && (
-                    <>
-                        <PartidoForm
-                            onSave={handleGuardar}
-                            initialData={editando}
-                            modoEdicion={!!editando}
-                            onCancel={handleCancelarEdicion}
-                        />
-                    </>
-                )}
-                {/* Comentario sutil abajo del form */}
-                <div className="mt-3 small text-secondary">
-                    <span>
-                        <b>Tip:</b> Cargá todos los jugadores antes de registrar partidos para poder asignar participaciones y cambios correctamente.
-                    </span>
-                </div>
             </div>
         </div>
     );

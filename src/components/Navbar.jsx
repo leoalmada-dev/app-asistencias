@@ -3,18 +3,16 @@ import { Navbar, Container, Nav, Form, InputGroup } from 'react-bootstrap';
 import { Link, useLocation } from 'react-router-dom';
 import { useTheme } from '../context/ThemeContext';
 import { useEquipo } from '../context/EquipoContext';
-import { FaMoon, FaSun, FaShirt } from 'react-icons/fa6';
+import { FaCog, FaMoon, FaSun, FaFutbol, FaChartBar } from 'react-icons/fa';
+import { FaShirt, FaDumbbell } from 'react-icons/fa6';
 
 export default function CustomNavbar() {
   const { modoOscuro, setModoOscuro } = useTheme();
   const { pathname } = useLocation();
   const { equipos, equipoId, setEquipoId } = useEquipo();
-  const [expanded, setExpanded] = useState(false); // Estado para hamburguesa
+  const [expanded, setExpanded] = useState(false);
 
-  // Equipo predeterminado: primero de la lista si ninguno seleccionado
   const equipoSelectValue = equipoId || (equipos[0]?.id ?? "");
-
-  // Función para colapsar menú tras navegar
   const handleNavClick = () => setExpanded(false);
 
   return (
@@ -34,29 +32,43 @@ export default function CustomNavbar() {
         <Navbar.Toggle aria-controls="menu-principal" />
         <Navbar.Collapse id="menu-principal">
           <Nav className="me-auto">
-            <Nav.Link as={Link} to="/jugadores" active={pathname === "/jugadores"} onClick={handleNavClick}>
-              Jugadores
-            </Nav.Link>
-            <Nav.Link as={Link} to="/practicas" active={pathname === "/practicas"} onClick={handleNavClick}>
+            <Nav.Link as={Link} to="/practicas" active={pathname === "/practicas"} onClick={handleNavClick} className="d-flex align-items-center">
+              <FaDumbbell className="me-2" />
               Prácticas
             </Nav.Link>
-            <Nav.Link as={Link} to="/partidos" active={pathname === "/partidos"} onClick={handleNavClick}>
+            <Nav.Link as={Link} to="/partidos" active={pathname === "/partidos"} onClick={handleNavClick} className="d-flex align-items-center">
+              <FaFutbol className="me-2" />
               Partidos
             </Nav.Link>
-            <Nav.Link as={Link} to="/estadisticas" active={pathname === "/estadisticas"} onClick={handleNavClick}>
+            <Nav.Link as={Link} to="/estadisticas" active={pathname === "/estadisticas"} onClick={handleNavClick} className="d-flex align-items-center">
+              <FaChartBar className="me-2" />
               Estadísticas
             </Nav.Link>
-            <Nav.Link as={Link} to="/equipos" active={pathname === "/equipos"} onClick={handleNavClick}>
-              Equipos
-            </Nav.Link>
-            <Nav.Link as={Link} to="/configuracion" active={pathname === "/configuracion"} onClick={handleNavClick}>
-              Configuración
-            </Nav.Link>
+            {/* Configuración: solo texto + icono en hamburguesa */}
+            <div className="d-lg-none">
+              <Nav.Link
+                as={Link}
+                to="/configuracion"
+                active={pathname === "/configuracion"}
+                onClick={handleNavClick}
+                className="d-flex align-items-center"
+              >
+                <FaCog className="me-2" />
+                Configuración
+              </Nav.Link>
+            </div>
           </Nav>
 
-          <div className="d-flex align-items-center gap-3">
-            {/* Selector de equipo */}
-            <InputGroup size="sm" className="w-auto">
+          {/* Selector de equipo + Switch + Engranaje */}
+          <div
+            className={
+              "d-flex flex-column flex-lg-row align-items-start align-items-lg-center gap-2 gap-lg-3 mt-3 mt-lg-0"
+            }
+            style={{
+              minWidth: 250, // para evitar que quede todo apretado
+            }}
+          >
+            <InputGroup size="sm" className="w-auto mb-2 mb-lg-0">
               <InputGroup.Text>
                 <FaShirt />
               </InputGroup.Text>
@@ -77,15 +89,44 @@ export default function CustomNavbar() {
                 ))}
               </Form.Select>
             </InputGroup>
-
-            {/* Icono de modo oscuro */}
-            <Form.Check
-              type="switch"
-              id="modoOscuroSwitch"
-              label={modoOscuro ? <FaMoon /> : <FaSun />}
-              checked={modoOscuro}
-              onChange={() => setModoOscuro(!modoOscuro)}
-            />
+            {/* Switch + icono bien alineados */}
+            <div className="d-flex align-items-center" style={{ minWidth: 80 }}>
+              <span
+                className="d-inline-flex align-items-center justify-content-center"
+                style={{
+                  height: "32px", // igual al alto del switch
+                  width: "32px",
+                  fontSize: "1.2rem",
+                  marginRight: "8px",
+                }}
+              >
+                {modoOscuro ? <FaMoon /> : <FaSun />}
+              </span>
+              <Form.Check
+                type="switch"
+                id="modoOscuroSwitch"
+                checked={modoOscuro}
+                onChange={() => setModoOscuro(!modoOscuro)}
+                style={{ marginBottom: 0 }}
+              />
+            </div>
+            {/* Engranaje solo desktop */}
+            <Nav.Link
+              as={Link}
+              to="/configuracion"
+              active={pathname === "/configuracion"}
+              onClick={handleNavClick}
+              className="d-none d-lg-flex align-items-center ms-2"
+              style={{
+                fontSize: "1.4rem",
+                padding: 0,
+                color: modoOscuro ? "#fff" : "#333",
+                minHeight: "40px"
+              }}
+              title="Configuración"
+            >
+              <FaCog />
+            </Nav.Link>
           </div>
         </Navbar.Collapse>
       </Container>
