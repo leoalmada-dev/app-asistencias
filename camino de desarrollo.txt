@@ -57,3 +57,42 @@ Aprovechar el PWA: notificaciones, trabajo offline robusto, etc.
 
 Escalar a multiusuario y/o nube (largo plazo):
 Cuando la app lo requiera por crecimiento, pensar en login y backend.
+
+
+posiciones en un select
+Cambiar njombre de practicas a entrenamiento (mas estandar)
+formato de hora
+ultima hora por defecto
+pensar bien la compatibilidad de asistencias para baby futbol o la mayor q son convocados
+cuando creas el partido indicar la duracion
+ultima duracion x defecto
+calculo de cambios en baby, entrar nuevamente
+numerar las listas de jugadores
+miunutos + descuentos
+sacar motivo de las faltas practicas estadisticas
+jugadores activos estan filtrados?
+
+
+
+PT- Portero
+
+DEFENSAS:
+
+DC- Defensa central
+LD- Lateral derecho
+LI- Lateral izquierdo
+
+CENTROCAMPISTAS:
+
+MP- MediaPunta
+MC- MedioCentro
+ID- Interior Derecho
+II- Interior Izquierdo
+MCD- MedioCampo Defensivo
+
+DELANTEROS:
+
+SP- Segundo Punta
+DC- Delantero Centro
+ED- Extremo Derecho
+EI- Extremo Izquierdo

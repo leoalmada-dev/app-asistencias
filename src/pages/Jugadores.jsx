@@ -6,9 +6,10 @@ import {
     eliminarJugador,
 } from "../hooks/useDB";
 import JugadorForm from "../components/JugadorForm";
-import { Button, Table, Alert } from "react-bootstrap";
+import { Button, Table, Alert, Badge } from "react-bootstrap";
 import { FaEdit, FaTrash } from "react-icons/fa";
 import { useEquipo } from "../context/EquipoContext";
+import { getPosData } from "../utils/posiciones";
 
 export default function Jugadores() {
     const [jugadores, setJugadores] = useState([]);
@@ -50,6 +51,30 @@ export default function Jugadores() {
         }
     };
 
+    // Mostrar las posiciones como badge de color
+    const renderPosiciones = (principal, secundaria) => (
+        <span>
+            {principal && getPosData(principal) && (
+                <Badge
+                    bg={getPosData(principal).color}
+                    className="me-1"
+                    title={getPosData(principal).label}
+                >
+                    {getPosData(principal).value}
+                </Badge>
+            )}
+            {secundaria && getPosData(secundaria) && (
+                <Badge
+                    bg={getPosData(secundaria).color}
+                    className="ms-1"
+                    title={getPosData(secundaria).label}
+                >
+                    {getPosData(secundaria).value}
+                </Badge>
+            )}
+        </span>
+    );
+
     return (
         <div className="container mt-4">
             <h3 className="mb-3">Jugadores</h3>
@@ -74,7 +99,7 @@ export default function Jugadores() {
                         <tr>
                             <th>Nombre</th>
                             <th>Nro</th>
-                            <th>Posición</th>
+                            <th>Posiciones</th>
                             <th>Activo</th>
                             <th>Acciones</th>
                         </tr>
@@ -91,7 +116,7 @@ export default function Jugadores() {
                                 <tr key={j.id}>
                                     <td>{j.nombre}</td>
                                     <td>{j.numero}</td>
-                                    <td>{j.posicion}</td>
+                                    <td>{renderPosiciones(j.posicion, j.posicionSecundaria)}</td>
                                     <td>{j.activo ? "✔️" : "❌"}</td>
                                     <td>
                                         <Button
