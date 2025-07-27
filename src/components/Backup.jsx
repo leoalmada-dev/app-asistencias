@@ -1,6 +1,6 @@
 import { useState, useRef } from "react";
 import { Button, Form, Modal } from "react-bootstrap";
-import { obtenerEquipos, obtenerJugadores, obtenerPracticas, obtenerPartidos } from "../hooks/useDB";
+import { obtenerEquipos, obtenerJugadores, obtenerEntrenamientos, obtenerPartidos } from "../hooks/useDB";
 import db from "../db/indexedDB";
 
 export default function Backup() {
@@ -13,7 +13,7 @@ export default function Backup() {
     const data = {
       equipos: await obtenerEquipos(),
       jugadores: await obtenerJugadores(),
-      practicas: await obtenerPracticas(),
+      entrenamientos: await obtenerEntrenamientos(),
       partidos: await obtenerPartidos(),
     };
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
@@ -43,21 +43,21 @@ export default function Backup() {
       try {
         const data = JSON.parse(evt.target.result);
 
-        if (!data.equipos || !data.jugadores || !data.practicas || !data.partidos) {
+        if (!data.equipos || !data.jugadores || !data.entrenamientos || !data.partidos) {
           alert("El archivo no tiene el formato correcto.");
           setShowModal(false);
           return;
         }
 
-        await db.transaction("rw", db.equipos, db.jugadores, db.practicas, db.partidos, async () => {
+        await db.transaction("rw", db.equipos, db.jugadores, db.entrenamientos, db.partidos, async () => {
           await db.equipos.clear();
           await db.jugadores.clear();
-          await db.practicas.clear();
+          await db.entrenamientos.clear();
           await db.partidos.clear();
 
           await db.equipos.bulkAdd(data.equipos);
           await db.jugadores.bulkAdd(data.jugadores);
-          await db.practicas.bulkAdd(data.practicas);
+          await db.entrenamientos.bulkAdd(data.entrenamientos);
           await db.partidos.bulkAdd(data.partidos);
         });
         setShowModal(false);

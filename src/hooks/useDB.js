@@ -16,19 +16,19 @@ export const eliminarJugador = async (id) => {
   return await db.jugadores.delete(id);
 };
 
-// ─── Prácticas ─────────────────────
-export const obtenerPracticas = async () => await db.practicas.toArray();
+// ─── Entrenamientos ─────────────────────
+export const obtenerEntrenamientos = async () => await db.entrenamientos.toArray();
 
-export const agregarPractica = async (practica) => {
-  return await db.practicas.add(practica);
+export const agregarEntrenamiento = async (entrenamiento) => {
+  return await db.entrenamientos.add(entrenamiento);
 };
 
-export const actualizarPractica = async (id, practica) => {
-  return await db.practicas.update(id, practica);
+export const actualizarEntrenamiento = async (id, entrenamiento) => {
+  return await db.entrenamientos.update(id, entrenamiento);
 };
 
-export const eliminarPractica = async (id) => {
-  return await db.practicas.delete(id);
+export const eliminarEntrenamiento = async (id) => {
+  return await db.entrenamientos.delete(id);
 };
 
 // ─── Partidos ─────────────────────
@@ -56,10 +56,10 @@ export const actualizarEquipo = async (id, equipo) => await db.equipos.update(id
 export const eliminarEquipo = async (id) => await db.equipos.delete(id);
 
 export const migrarObservacionesANotas = async () => {
-  const practicas = await db.practicas.toArray();
-  for (const p of practicas) {
+  const entrenamientos = await db.entrenamientos.toArray();
+  for (const p of entrenamientos) {
     if (p.observaciones !== undefined) {
-      await db.practicas.update(p.id, {
+      await db.entrenamientos.update(p.id, {
         notasEntrenador: p.observaciones,
       });
     }

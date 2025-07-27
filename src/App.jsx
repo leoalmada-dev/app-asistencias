@@ -6,13 +6,13 @@ import { migrarObservacionesANotas } from './hooks/useDB';
 import { useEffect } from 'react';
 
 import Jugadores from './pages/Jugadores';
-import Practicas from './pages/Practicas';
+import Entrenamientos from './pages/Entrenamientos';
 import Partidos from './pages/Partidos';
 import Estadisticas from './pages/Estadisticas';
 import Equipos from './pages/Equipos';
 import AppWrapper from './AppWrapper';
 import Configuracion from './pages/Configuracion';
-import DetallePractica from './pages/DetallePractica';
+import DetalleEntrenamiento from './pages/DetalleEntrenamiento';
 import DetallePartido from './pages/DetallePartido';
 
 export default function App() {
@@ -34,8 +34,8 @@ export default function App() {
               <Routes>
                 <Route path="/" element={<Jugadores />} />
                 <Route path="/jugadores" element={<Jugadores />} />
-                <Route path="/practicas" element={<Practicas />} />
-                <Route path="/practicas/:id" element={<DetallePractica />} />
+                <Route path="/entrenamientos" element={<Entrenamientos />} />
+                <Route path="/entrenamientos/:id" element={<DetalleEntrenamiento />} />
                 <Route path="/partidos" element={<Partidos />} />
                 <Route path="/estadisticas" element={<Estadisticas />} />
                 <Route path="/equipos" element={<Equipos />} />

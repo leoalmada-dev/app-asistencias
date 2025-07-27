@@ -6,9 +6,9 @@ const db = new Dexie('AsistenciasFutbolDB');
 // Definimos las tablas y los índices
 db.version(1).stores({
   jugadores: '++id, nombre, numero, categoria, posicion, activo',
-  practicas: '++id, fecha, hora, lugar',
+  entrenamientos: '++id, fecha, hora, lugar',
   partidos: '++id, fecha, tipo, torneo, rival',
-  asistencias: '++id, practicaId, jugadorId, presente',
+  asistencias: '++id, entrenamientoId, jugadorId, presente',
   participaciones: '++id, partidoId, jugadorId, minutoEntrada, minutoSalida',
   cambios: '++id, partidoId, entra, sale, minuto'
 });
@@ -16,9 +16,9 @@ db.version(1).stores({
 db.version(2).stores({
   equipos: '++id, nombre',
   jugadores: '++id, nombre, numero, posicion, activo, equipoId',
-  practicas: '++id, fecha, hora, lugar, equipoId',
+  entrenamientos: '++id, fecha, hora, lugar, equipoId',
   partidos: '++id, fecha, tipo, torneo, rival, equipoId',
-  asistencias: '++id, practicaId, jugadorId, presente',
+  asistencias: '++id, entrenamientoId, jugadorId, presente',
   participaciones: '++id, partidoId, jugadorId, minutoEntrada, minutoSalida',
   cambios: '++id, partidoId, entra, sale, minuto'
 });

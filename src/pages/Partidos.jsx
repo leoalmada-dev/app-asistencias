@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import {
     obtenerPartidos,
     agregarPartido,
@@ -19,7 +19,8 @@ export default function Partidos() {
     const [jugadores, setJugadores] = useState([]);
     const { equipoId } = useEquipo();
 
-    // Carga partidos y jugadores del equipo actual
+    const formRef = useRef(); // Referencia al formulario
+
     const cargar = async () => {
         const listaPartidos = await obtenerPartidos();
         setPartidos(listaPartidos.filter(p => p.equipoId === equipoId));
@@ -52,6 +53,13 @@ export default function Partidos() {
         }
     };
 
+    const handleEditar = (partido) => {
+        setEditando(partido);
+        setTimeout(() => {
+            formRef.current?.scrollIntoView({ behavior: "smooth" });
+        }, 100);
+    };
+
     if (!equipoId) return <Alert variant="warning">Debes seleccionar un equipo para usar esta sección.</Alert>;
     const sinJugadores = jugadores.length === 0;
 
@@ -59,10 +67,9 @@ export default function Partidos() {
         <div className="container mt-4">
             <h3 className="mb-3 d-flex align-items-center">
                 <FaFutbol className="me-2" />
-                Prácticas
+                Partidos
             </h3>
 
-            {/* Alerta si NO hay jugadores */}
             {sinJugadores && (
                 <Alert variant="info" className="mb-4">
                     <strong>¡Atención!</strong> Para registrar un partido, primero debes agregar jugadores a este equipo.<br />
@@ -73,20 +80,15 @@ export default function Partidos() {
                 </Alert>
             )}
 
-            {/* Formulario de partido */}
-            <div className="mb-4">
-                <h5 className="mb-2">{editando ? "Editar partido" : "Registrar partido"}</h5>
+            <div ref={formRef} className="mb-4">
                 {!sinJugadores && (
-                    <>
-                        <PartidoForm
-                            onSave={handleGuardar}
-                            initialData={editando}
-                            modoEdicion={!!editando}
-                            onCancel={handleCancelarEdicion}
-                        />
-                    </>
+                    <PartidoForm
+                        onSave={handleGuardar}
+                        initialData={editando}
+                        modoEdicion={!!editando}
+                        onCancel={handleCancelarEdicion}
+                    />
                 )}
-                {/* Comentario sutil abajo del form */}
                 <div className="mt-3 small text-secondary">
                     <span>
                         <b>Tip:</b> Cargá todos los jugadores antes de registrar partidos para poder asignar participaciones y cambios correctamente.
@@ -94,10 +96,8 @@ export default function Partidos() {
                 </div>
             </div>
 
-            {/* Separador visual */}
             <hr className="my-4" style={{ borderTop: "2px solid #888" }} />
 
-            {/* Lista de partidos */}
             <div>
                 <h5 className="mb-3">Lista de partidos registrados</h5>
                 <Table striped bordered hover responsive>
@@ -106,6 +106,7 @@ export default function Partidos() {
                             <th>Fecha</th>
                             <th>Tipo</th>
                             <th>Rival</th>
+                            <th>Duración (min)</th>
                             <th>Resultado</th>
                             <th>Acciones</th>
                         </tr>
@@ -113,7 +114,7 @@ export default function Partidos() {
                     <tbody>
                         {partidos.length === 0 ? (
                             <tr>
-                                <td colSpan={5} className="text-center text-muted">
+                                <td colSpan={6} className="text-center text-muted">
                                     No hay partidos registrados para este equipo.
                                 </td>
                             </tr>
@@ -123,6 +124,7 @@ export default function Partidos() {
                                     <td>{p.fecha}</td>
                                     <td>{p.tipo}</td>
                                     <td>{p.rival}</td>
+                                    <td>{p.duracion || "-"}</td>
                                     <td>{p.golesFavor} - {p.golesContra}</td>
                                     <td>
                                         <Button as={Link} to={`/partidos/${p.id}`} variant="outline-info" size="sm"
@@ -132,7 +134,7 @@ export default function Partidos() {
                                         </Button>
                                         <Button variant="outline-warning"
                                             className="me-2"
-                                            size="sm" onClick={() => setEditando(p)}>
+                                            size="sm" onClick={() => handleEditar(p)}>
                                             <FaEdit />
                                         </Button>
                                         <Button variant="outline-danger"

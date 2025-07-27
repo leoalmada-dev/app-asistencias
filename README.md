@@ -51,7 +51,7 @@ Este proyecto es una aplicación web **PWA** (Progressive Web App) para la gesti
 src/
  ├── components/
  │     ├── JugadorForm.jsx
- │     ├── PracticasStats.jsx
+ │     ├── EntrenamientosStats.jsx
  │     ├── PartidosStats.jsx
  │     └── ...
  ├── pages/

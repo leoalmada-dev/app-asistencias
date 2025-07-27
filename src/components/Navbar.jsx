@@ -32,9 +32,9 @@ export default function CustomNavbar() {
         <Navbar.Toggle aria-controls="menu-principal" />
         <Navbar.Collapse id="menu-principal">
           <Nav className="me-auto">
-            <Nav.Link as={Link} to="/practicas" active={pathname === "/practicas"} onClick={handleNavClick} className="d-flex align-items-center">
+            <Nav.Link as={Link} to="/entrenamientos" active={pathname === "/entrenamientos"} onClick={handleNavClick} className="d-flex align-items-center">
               <FaDumbbell className="me-2" />
-              Prácticas
+              Entrenamientos
             </Nav.Link>
             <Nav.Link as={Link} to="/partidos" active={pathname === "/partidos"} onClick={handleNavClick} className="d-flex align-items-center">
               <FaFutbol className="me-2" />

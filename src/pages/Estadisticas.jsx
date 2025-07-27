@@ -1,7 +1,7 @@
 import { Tabs, Tab } from "react-bootstrap";
 import { FaFutbol,  FaChartBar } from "react-icons/fa";
 import PartidosStats from "../components/PartidosStats";
-import PracticasStats from "../components/PracticasStats";
+import EntrenamientosStats from "../components/EntrenamientosStats";
 import { FaDumbbell } from "react-icons/fa6";
 
 export default function Estadisticas() {
@@ -19,10 +19,10 @@ export default function Estadisticas() {
                     <PartidosStats />
                 </Tab>
                 <Tab
-                    eventKey="practicas"
-                    title={<span><FaDumbbell className="me-2 mb-1" />Prácticas</span>}
+                    eventKey="entrenamientos"
+                    title={<span><FaDumbbell className="me-2 mb-1" />Entrenamientos</span>}
                 >
-                    <PracticasStats />
+                    <EntrenamientosStats />
                 </Tab>
             </Tabs>
         </div>

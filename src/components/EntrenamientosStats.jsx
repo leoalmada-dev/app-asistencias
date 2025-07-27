@@ -1,6 +1,6 @@
-// src/components/PracticasStats.jsx
+// src/components/EntrenamientosStats.jsx
 import { useEffect, useState, useRef } from "react";
-import { obtenerJugadores, obtenerPracticas, obtenerEquipos } from "../hooks/useDB";
+import { obtenerJugadores, obtenerEntrenamientos, obtenerEquipos } from "../hooks/useDB";
 import { Table, Badge, Row, Col, Form, Button } from "react-bootstrap";
 import { useEquipo } from "../context/EquipoContext";
 import {
@@ -16,7 +16,7 @@ const NOMBRES_MESES = [
     "Julio", "Agosto", "Setiembre", "Octubre", "Noviembre", "Diciembre"
 ];
 
-export default function PracticasStats() {
+export default function EntrenamientosStats() {
     const [estadisticas, setEstadisticas] = useState([]);
     const { equipoId } = useEquipo();
 
@@ -38,18 +38,18 @@ export default function PracticasStats() {
     const equipoNombre = equipos.find(e => e.id === equipoId)?.nombre || "SinEquipo";
     const filtroMesNombre = filtros.mes ? NOMBRES_MESES[parseInt(filtros.mes, 10) - 1] : "Todos";
     const filtroAnio = filtros.anio || "Todos";
-    const nombreArchivo = `Practicas_${filtroMesNombre}_${filtroAnio}_${equipoNombre}`;
-    const titulo = `Asistencias a Prácticas (${equipoNombre} - ${filtroMesNombre} ${filtroAnio})`;
+    const nombreArchivo = `Entrenamientos_${filtroMesNombre}_${filtroAnio}_${equipoNombre}`;
+    const titulo = `Asistencias a Entrenamientos (${equipoNombre} - ${filtroMesNombre} ${filtroAnio})`;
 
-    // Actualiza filtros disponibles según las prácticas del equipo
+    // Actualiza filtros disponibles según las entrenamientos del equipo
     useEffect(() => {
         const cargarFiltros = async () => {
-            const practicas = (await obtenerPracticas()).filter(p => p.equipoId === equipoId);
-            const anios = Array.from(new Set(practicas.map(p => (p.fecha || "").substring(0, 4)))).filter(a => a);
+            const entrenamientos = (await obtenerEntrenamientos()).filter(p => p.equipoId === equipoId);
+            const anios = Array.from(new Set(entrenamientos.map(p => (p.fecha || "").substring(0, 4)))).filter(a => a);
             setAniosDisponibles(anios);
             if (filtros.anio) {
                 const meses = Array.from(new Set(
-                    practicas
+                    entrenamientos
                         .filter(p => (p.fecha || "").startsWith(filtros.anio))
                         .map(p => (p.fecha || "").substring(5, 7))
                 ));
@@ -62,24 +62,24 @@ export default function PracticasStats() {
     useEffect(() => {
         const cargarEstadisticas = async () => {
             const jugadores = (await obtenerJugadores()).filter(j => j.equipoId === equipoId);
-            let practicas = (await obtenerPracticas()).filter(p => p.equipoId === equipoId);
+            let entrenamientos = (await obtenerEntrenamientos()).filter(p => p.equipoId === equipoId);
 
             if (filtros.anio) {
-                practicas = practicas.filter(p => (p.fecha || "").startsWith(filtros.anio));
+                entrenamientos = entrenamientos.filter(p => (p.fecha || "").startsWith(filtros.anio));
             }
             if (filtros.mes) {
-                practicas = practicas.filter(p => (p.fecha || "").substring(5, 7) === filtros.mes);
+                entrenamientos = entrenamientos.filter(p => (p.fecha || "").substring(5, 7) === filtros.mes);
             }
 
-            const totalPracticas = practicas.length;
+            const totalEntrenamientos = entrenamientos.length;
 
             const datos = jugadores.map((jugador) => {
                 let asistencias = 0;
                 let faltas = 0;
                 let motivos = [];
 
-                practicas.forEach((practica) => {
-                    const a = (practica.asistencias || []).find(x => x.jugadorId === jugador.id);
+                entrenamientos.forEach((entrenamiento) => {
+                    const a = (entrenamiento.asistencias || []).find(x => x.jugadorId === jugador.id);
                     if (a) {
                         if (a.presente) {
                             asistencias++;
@@ -96,7 +96,7 @@ export default function PracticasStats() {
                     posicion: jugador.posicion,
                     asistencias,
                     faltas,
-                    porcentaje: totalPracticas > 0 ? Math.round((asistencias / totalPracticas) * 100) : 0,
+                    porcentaje: totalEntrenamientos > 0 ? Math.round((asistencias / totalEntrenamientos) * 100) : 0,
                     motivos
                 };
             });

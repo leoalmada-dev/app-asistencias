@@ -1,37 +1,39 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import {
-    obtenerPracticas,
-    agregarPractica,
-    actualizarPractica,
-    eliminarPractica,
+    obtenerEntrenamientos,
+    agregarEntrenamiento,
+    actualizarEntrenamiento,
+    eliminarEntrenamiento,
 } from "../hooks/useDB";
-import PracticaForm from "../components/PracticaForm";
+import EntrenamientoForm from "../components/EntrenamientoForm";
 import { Table, Button, Alert } from "react-bootstrap";
 import { FaEdit, FaTrash, FaEye } from "react-icons/fa";
 import { useEquipo } from "../context/EquipoContext";
 import { Link } from "react-router-dom";
 import { FaDumbbell } from "react-icons/fa6";
 
-export default function Practicas() {
-    const [practicas, setPracticas] = useState([]);
+export default function Entrenamientos() {
+    const [entrenamientos, setEntrenamientos] = useState([]);
     const [editando, setEditando] = useState(null);
     const { equipoId } = useEquipo();
 
+    const formRef = useRef(); // Referencia para scroll al formulario
+
     const cargar = async () => {
-        const lista = await obtenerPracticas();
-        setPracticas(lista.filter(p => p.equipoId === equipoId));
+        const lista = await obtenerEntrenamientos();
+        setEntrenamientos(lista.filter(p => p.equipoId === equipoId));
     };
 
     useEffect(() => {
         cargar();
     }, [equipoId]);
 
-    const handleGuardar = async (practica) => {
+    const handleGuardar = async (entrenamiento) => {
         if (editando) {
-            await actualizarPractica(editando.id, { ...practica, equipoId });
+            await actualizarEntrenamiento(editando.id, { ...entrenamiento, equipoId });
             setEditando(null);
         } else {
-            await agregarPractica({ ...practica, equipoId });
+            await agregarEntrenamiento({ ...entrenamiento, equipoId });
         }
         cargar();
     };
@@ -39,10 +41,17 @@ export default function Practicas() {
     const handleCancelarEdicion = () => setEditando(null);
 
     const handleEliminar = async (id) => {
-        if (window.confirm("¿Eliminar esta práctica?")) {
-            await eliminarPractica(id);
+        if (window.confirm("¿Eliminar este entrenamiento?")) {
+            await eliminarEntrenamiento(id);
             cargar();
         }
+    };
+
+    const handleEditar = (entrenamiento) => {
+        setEditando(entrenamiento);
+        setTimeout(() => {
+            formRef.current?.scrollIntoView({ behavior: "smooth" });
+        }, 100); // retraso breve para asegurar render
     };
 
     if (!equipoId)
@@ -56,13 +65,11 @@ export default function Practicas() {
         <div className="container mt-4">
             <h3 className="mb-3 d-flex align-items-center">
                 <FaDumbbell className="me-2" />
-                Prácticas
+                Entrenamiento
             </h3>
-            <div className="mb-4">
-                <h5 className="mb-2">
-                    {editando ? "Editar práctica" : "Registrar práctica"}
-                </h5>
-                <PracticaForm
+
+            <div ref={formRef} className="mb-4">
+                <EntrenamientoForm
                     onSave={handleGuardar}
                     initialData={editando}
                     modoEdicion={!!editando}
@@ -73,37 +80,39 @@ export default function Practicas() {
             <hr className="my-4" style={{ borderTop: "2px solid #888" }} />
 
             <div>
-                <h5 className="mb-3">Listado de prácticas</h5>
+                <h5 className="mb-3">Listado de entrenamientos</h5>
                 <Table striped bordered hover responsive>
                     <thead>
                         <tr>
                             <th>Fecha</th>
                             <th>Hora</th>
                             <th>Lugar</th>
+                            <th>Duración (min)</th>
                             <th>Asistieron</th>
                             <th>Acciones</th>
                         </tr>
                     </thead>
                     <tbody>
-                        {practicas.length === 0 ? (
+                        {entrenamientos.length === 0 ? (
                             <tr>
                                 <td colSpan={6} className="text-center text-muted">
-                                    No hay prácticas registradas para este equipo.
+                                    No hay entrenamientos registrados para este equipo.
                                 </td>
                             </tr>
                         ) : (
-                            practicas.map((p) => {
+                            entrenamientos.map((p) => {
                                 const presentes = p.asistencias?.filter(a => a.presente).length || 0;
                                 return (
                                     <tr key={p.id}>
                                         <td>{p.fecha}</td>
                                         <td>{p.hora}</td>
                                         <td>{p.lugar}</td>
+                                        <td>{p.duracion || "-"}</td>
                                         <td>{presentes}</td>
                                         <td>
                                             <Button
                                                 as={Link}
-                                                to={`/practicas/${p.id}`}
+                                                to={`/entrenamientos/${p.id}`}
                                                 variant="outline-info"
                                                 size="sm"
                                                 title="Ver detalle"
@@ -115,7 +124,7 @@ export default function Practicas() {
                                                 variant="outline-warning"
                                                 className="me-2"
                                                 size="sm"
-                                                onClick={() => setEditando(p)}
+                                                onClick={() => handleEditar(p)}
                                             >
                                                 <FaEdit />
                                             </Button>

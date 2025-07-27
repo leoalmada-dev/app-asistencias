@@ -32,7 +32,7 @@ export const CATEGORIAS_POSICION = [
     color: "danger",
     posiciones: [
       { value: "SP", label: "Segundo Punta", color: "danger" },
-      { value: "DC2", label: "Delantero Centro", color: "danger" },
+      { value: "CD", label: "Centro Delantero", color: "danger" },
       { value: "ED", label: "Extremo Derecho", color: "danger" },
       { value: "EI", label: "Extremo Izquierdo", color: "danger" }
     ]

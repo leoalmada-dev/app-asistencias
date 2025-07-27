@@ -60,10 +60,9 @@ Cuando la app lo requiera por crecimiento, pensar en login y backend.
 
 
 posiciones en un select
-Cambiar njombre de practicas a entrenamiento (mas estandar)
-formato de hora
+Cambiar nombre de practicas a entrenamiento (mas estandar)
 ultima hora por defecto
-pensar bien la compatibilidad de asistencias para baby futbol o la mayor q son convocados
+
 cuando creas el partido indicar la duracion
 ultima duracion x defecto
 calculo de cambios en baby, entrar nuevamente
@@ -71,6 +70,8 @@ numerar las listas de jugadores
 miunutos + descuentos
 sacar motivo de las faltas practicas estadisticas
 jugadores activos estan filtrados?
+estadisticas de partidos filtrados x campeonato
+pensar bien la compatibilidad de asistencias para baby futbol o la mayor q son convocados
 
 
 
