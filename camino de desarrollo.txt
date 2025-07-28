@@ -67,7 +67,7 @@ ultima duracion x defecto
 numerar las listas de jugadores
 achicar motivo de las faltas practicas estadisticas
 
-
+grafica partidos ajustar al "ordenar por"
 miunutos + descuentos
 jugadores activos estan filtrados?
 estadisticas de partidos filtrados x campeonato

@@ -231,19 +231,19 @@ export default function EntrenamientosStats() {
 
             <div className="d-flex justify-content-between align-items-center mb-2">
                 <div className="d-flex justify-content-end align-items-center mb-2">
-                <Form.Label className="mb-0 me-2">Ordenar por:</Form.Label>
-                <Form.Select
-                    size="sm"
-                    style={{ width: 180 }}
-                    value={orden}
-                    onChange={e => setOrden(e.target.value)}
-                >
-                    <option value="numero">Número de camiseta</option>
-                    <option value="asistencias">Asistencias</option>
-                    <option value="faltas">Faltas</option>
-                    <option value="porcentaje">% de asistencia</option>
-                </Form.Select>
-            </div>
+                    <Form.Label className="mb-0 me-2">Ordenar por:</Form.Label>
+                    <Form.Select
+                        size="sm"
+                        style={{ width: 180 }}
+                        value={orden}
+                        onChange={e => setOrden(e.target.value)}
+                    >
+                        <option value="numero">Número de camiseta</option>
+                        <option value="asistencias">Asistencias</option>
+                        <option value="faltas">Faltas</option>
+                        <option value="porcentaje">% de asistencia</option>
+                    </Form.Select>
+                </div>
                 <Button
                     size="sm"
                     variant="link"
@@ -258,14 +258,14 @@ export default function EntrenamientosStats() {
 
             <Table striped bordered hover responsive size="sm" className="mt-2">
                 <thead>
-                    <tr>
-                        <th style={{ width: "5%" }} className="text-center">#</th>
-                        <th style={{ width: "22%" }}>Jugador</th>
-                        <th style={{ width: "18%" }}>Posiciones</th>
-                        <th style={{ width: "12%" }}>Asistencias</th>
-                        <th style={{ width: "10%" }}>Faltas</th>
-                        <th style={{ width: "13%" }}>% Asist.</th>
-                        <th style={{ width: "7%" }} className="text-center">Motivos</th>
+                    <tr className="text-center">
+                        <th style={{ width: "5%" }} >#</th>
+                        <th style={{ width: "33%" }}>Jugador</th>
+                        <th style={{ width: "15%" }} >Posiciones</th>
+                        <th style={{ width: "8%" }} >Asistencias</th>
+                        <th style={{ width: "8%" }} >Faltas</th>
+                        <th style={{ width: "13%" }} >% Asist.</th>
+                        <th style={{ width: "5%" }} >Motivos</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -282,7 +282,7 @@ export default function EntrenamientosStats() {
                                         {j.nombre}
                                     </b>
                                 </td>
-                                <td>
+                                <td className="text-center">
                                     {pos1 && (
                                         <Badge
                                             bg={pos1.color}
@@ -303,19 +303,19 @@ export default function EntrenamientosStats() {
                                         </Badge>
                                     )}
                                 </td>
-                                <td>
+                                <td className="text-center">
                                     <Badge bg="success" className="fs-6">
                                         {j.asistencias}
                                     </Badge>
                                 </td>
-                                <td>
+                                <td className="text-center">
                                     {j.faltas > 0 && (
                                         <Badge bg="danger" className="fs-6">
                                             {j.faltas}
                                         </Badge>
                                     )}
                                 </td>
-                                <td>
+                                <td className="text-center">
                                     <Badge bg={j.porcentaje >= 80 ? "success" : j.porcentaje >= 50 ? "warning" : "secondary"}>
                                         {j.porcentaje}%
                                     </Badge>

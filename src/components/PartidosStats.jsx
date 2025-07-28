@@ -1,3 +1,4 @@
+// src/components/PartidosStats.jsx
 import { useEffect, useState, useRef } from "react";
 import { obtenerJugadores, obtenerPartidos, obtenerEquipos } from "../hooks/useDB";
 import { Table, Badge, Row, Col, Form, Button } from "react-bootstrap";
@@ -133,6 +134,7 @@ export default function PartidosStats() {
         cargarEstadisticas();
     }, [equipoId, filtros]);
 
+    // --- ORDENAMIENTO Y DATOS ORDENADOS ---
     const datosOrdenados = [...estadisticas].sort((a, b) => {
         if (orden === "numero") {
             const numA = parseInt(a.numero) || 999;
@@ -144,6 +146,16 @@ export default function PartidosStats() {
         if (orden === "porcentaje") return b.porcentaje - a.porcentaje;
         return b.partidosJugados - a.partidosJugados;
     });
+
+    // --- DATOS PARA LOS GRÁFICOS ORDENADOS SEGÚN LA TABLA ---
+    const datosGraficoMinutos = datosOrdenados.map(j => ({
+        nombre: j.nombre,
+        Minutos: j.minutosTotales
+    }));
+    const datosGraficoGoles = datosOrdenados.map(j => ({
+        nombre: j.nombre,
+        Goles: j.goles
+    }));
 
     // Exportar tabla
     const handleExportarExcel = () => {
@@ -235,7 +247,7 @@ export default function PartidosStats() {
                 </Col>
             </Row>
 
-            {/* Gráficos */}
+            {/* Gráficos (ahora usan datos ordenados igual que la tabla) */}
             <Row className="mb-4">
                 <Col md={6}>
                     <div className="d-flex align-items-center justify-content-between">
@@ -251,7 +263,7 @@ export default function PartidosStats() {
                     </div>
                     <div ref={graficoMinutosRef}>
                         <ResponsiveContainer width="100%" height={250}>
-                            <BarChart data={estadisticas.map(j => ({ nombre: j.nombre, Minutos: j.minutosTotales }))} margin={{ left: -20 }}>
+                            <BarChart data={datosGraficoMinutos} margin={{ left: -20 }}>
                                 <CartesianGrid strokeDasharray="3 3" />
                                 <XAxis dataKey="nombre" />
                                 <YAxis />
@@ -276,7 +288,7 @@ export default function PartidosStats() {
                     </div>
                     <div ref={graficoGolesRef}>
                         <ResponsiveContainer width="100%" height={250}>
-                            <BarChart data={estadisticas.map(j => ({ nombre: j.nombre, Goles: j.goles }))} margin={{ left: -20 }}>
+                            <BarChart data={datosGraficoGoles} margin={{ left: -20 }}>
                                 <CartesianGrid strokeDasharray="3 3" />
                                 <XAxis dataKey="nombre" />
                                 <YAxis />
@@ -319,15 +331,15 @@ export default function PartidosStats() {
 
             <Table striped bordered hover responsive size="sm" className="mt-3">
                 <thead>
-                    <tr>
-                        <th style={{ width: "5%" }} className="text-center">#</th>
-                        <th style={{ width: "22%" }}>Jugador</th>
-                        <th style={{ width: "18%" }}>Posiciones</th>
+                    <tr className="text-center">
+                        <th style={{ width: "5%" }} >#</th>
+                        <th style={{ width: "30%" }}>Jugador</th>
+                        <th style={{ width: "12%" }}>Posiciones</th>
                         <th style={{ width: "11%" }}>Minutos</th>
                         <th style={{ width: "9%" }}>Partidos</th>
                         <th style={{ width: "12%" }}>Prom. min/partido</th>
                         <th style={{ width: "8%" }}>Goles</th>
-                        <th style={{ width: "12%" }}>% Jugados</th>
+                        <th style={{ width: "8%" }}>% Jugados</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -344,7 +356,7 @@ export default function PartidosStats() {
                                         {j.nombre}
                                     </b>
                                 </td>
-                                <td>
+                                <td className="text-center">
                                     {pos1 && (
                                         <Badge
                                             bg={pos1.color}
@@ -365,15 +377,15 @@ export default function PartidosStats() {
                                         </Badge>
                                     )}
                                 </td>
-                                <td>{j.minutosTotales}</td>
-                                <td>{j.partidosJugados}</td>
-                                <td>{j.promedioMin}</td>
-                                <td>
+                                <td className="text-center">{j.minutosTotales}</td>
+                                <td className="text-center">{j.partidosJugados}</td>
+                                <td className="text-center">{j.promedioMin}</td>
+                                <td className="text-center">
                                     {j.goles > 0
                                         ? <Badge bg="success" className="fs-6">{j.goles} ⚽</Badge>
                                         : <span className="text-muted">-</span>}
                                 </td>
-                                <td>
+                                <td className="text-center">
                                     <Badge bg={j.porcentaje >= 80 ? "success" : j.porcentaje >= 50 ? "warning" : "secondary"}>
                                         {j.porcentaje}%
                                     </Badge>
