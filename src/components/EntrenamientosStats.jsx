@@ -1,32 +1,44 @@
 // src/components/EntrenamientosStats.jsx
 import { useEffect, useState, useRef } from "react";
 import { obtenerJugadores, obtenerEntrenamientos, obtenerEquipos } from "../hooks/useDB";
-import { Table, Badge, Row, Col, Form, Button } from "react-bootstrap";
+import { Table, Badge, Row, Col, Form, Button, OverlayTrigger, Tooltip } from "react-bootstrap";
 import { useEquipo } from "../context/EquipoContext";
 import {
-    BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend, CartesianGrid
+    BarChart, Bar, XAxis, YAxis, Tooltip as ChartTooltip, ResponsiveContainer, Legend, CartesianGrid
 } from "recharts";
 import { exportarEstadisticasAExcel } from "../utils/exportarEstadisticas";
 import { exportarGraficoComoPNG } from "../utils/exportarGraficoComoPNG";
 import { FaFileExcel, FaDownload } from "react-icons/fa6";
-import { FaUserCheck } from "react-icons/fa";
+import { FaUserCheck, FaRegCommentDots } from "react-icons/fa";
+import { CATEGORIAS_POSICION } from "../data/posiciones";
 
 const NOMBRES_MESES = [
     "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
     "Julio", "Agosto", "Setiembre", "Octubre", "Noviembre", "Diciembre"
 ];
 
+function getPosicionData(valor) {
+    for (const cat of CATEGORIAS_POSICION) {
+        const found = cat.posiciones.find(p => p.value === valor);
+        if (found) return found;
+    }
+    return null;
+}
+
 export default function EntrenamientosStats() {
     const [estadisticas, setEstadisticas] = useState([]);
     const { equipoId } = useEquipo();
 
+    // Año y mes actual por defecto
+    const now = new Date();
     const [filtros, setFiltros] = useState({
-        anio: "",
-        mes: "",
+        anio: now.getFullYear().toString(),
+        mes: String(now.getMonth() + 1).padStart(2, '0'),
     });
     const [aniosDisponibles, setAniosDisponibles] = useState([]);
     const [mesesDisponibles, setMesesDisponibles] = useState([]);
     const [equipos, setEquipos] = useState([]);
+    const [orden, setOrden] = useState("numero");
 
     const graficoAsistenciasRef = useRef(null);
 
@@ -34,14 +46,13 @@ export default function EntrenamientosStats() {
         obtenerEquipos().then(setEquipos);
     }, []);
 
-    // Estos valores se deben definir antes de usarlos en nombreArchivo y titulo
     const equipoNombre = equipos.find(e => e.id === equipoId)?.nombre || "SinEquipo";
     const filtroMesNombre = filtros.mes ? NOMBRES_MESES[parseInt(filtros.mes, 10) - 1] : "Todos";
     const filtroAnio = filtros.anio || "Todos";
     const nombreArchivo = `Entrenamientos_${filtroMesNombre}_${filtroAnio}_${equipoNombre}`;
     const titulo = `Asistencias a Entrenamientos (${equipoNombre} - ${filtroMesNombre} ${filtroAnio})`;
 
-    // Actualiza filtros disponibles según las entrenamientos del equipo
+    // Actualiza filtros disponibles según los entrenamientos del equipo
     useEffect(() => {
         const cargarFiltros = async () => {
             const entrenamientos = (await obtenerEntrenamientos()).filter(p => p.equipoId === equipoId);
@@ -93,7 +104,9 @@ export default function EntrenamientosStats() {
                 return {
                     id: jugador.id,
                     nombre: jugador.nombre,
+                    numero: jugador.numero,
                     posicion: jugador.posicion,
+                    posicionSecundaria: jugador.posicionSecundaria,
                     asistencias,
                     faltas,
                     porcentaje: totalEntrenamientos > 0 ? Math.round((asistencias / totalEntrenamientos) * 100) : 0,
@@ -107,8 +120,21 @@ export default function EntrenamientosStats() {
         cargarEstadisticas();
     }, [equipoId, filtros]);
 
+    // Ordenamiento avanzado
+    const datosOrdenados = [...estadisticas].sort((a, b) => {
+        if (orden === "numero") {
+            const numA = parseInt(a.numero) || 999;
+            const numB = parseInt(b.numero) || 999;
+            return numA - numB;
+        }
+        if (orden === "asistencias") return b.asistencias - a.asistencias;
+        if (orden === "faltas") return b.faltas - a.faltas;
+        if (orden === "porcentaje") return b.porcentaje - a.porcentaje;
+        return 0;
+    });
+
     // Para gráfico
-    const datosGrafico = estadisticas.map(j => ({
+    const datosGrafico = datosOrdenados.map(j => ({
         nombre: j.nombre,
         Asistencias: j.asistencias
     }));
@@ -116,9 +142,11 @@ export default function EntrenamientosStats() {
     // Exportar tabla
     const handleExportarExcel = () => {
         exportarEstadisticasAExcel({
-            datosTabla: estadisticas.map(j => ({
+            datosTabla: datosOrdenados.map(j => ({
                 Nombre: j.nombre,
+                Número: j.numero,
                 Posición: j.posicion,
+                "Posición secundaria": j.posicionSecundaria,
                 Asistencias: j.asistencias,
                 Faltas: j.faltas,
                 "% Asistencia": j.porcentaje + "%",
@@ -192,7 +220,7 @@ export default function EntrenamientosStats() {
                                 <CartesianGrid strokeDasharray="3 3" />
                                 <XAxis dataKey="nombre" />
                                 <YAxis />
-                                <Tooltip />
+                                <ChartTooltip />
                                 <Legend />
                                 <Bar dataKey="Asistencias" fill="#0d6efd" />
                             </BarChart>
@@ -201,11 +229,21 @@ export default function EntrenamientosStats() {
                 </Col>
             </Row>
 
-            {/* Tabla + Exportar */}
             <div className="d-flex justify-content-between align-items-center mb-2">
-                <div>
-                    <Form.Label className="mb-0">Jugadores</Form.Label>
-                </div>
+                <div className="d-flex justify-content-end align-items-center mb-2">
+                <Form.Label className="mb-0 me-2">Ordenar por:</Form.Label>
+                <Form.Select
+                    size="sm"
+                    style={{ width: 180 }}
+                    value={orden}
+                    onChange={e => setOrden(e.target.value)}
+                >
+                    <option value="numero">Número de camiseta</option>
+                    <option value="asistencias">Asistencias</option>
+                    <option value="faltas">Faltas</option>
+                    <option value="porcentaje">% de asistencia</option>
+                </Form.Select>
+            </div>
                 <Button
                     size="sm"
                     variant="link"
@@ -218,45 +256,91 @@ export default function EntrenamientosStats() {
                 </Button>
             </div>
 
-            <Table striped bordered hover responsive className="mt-2">
+            <Table striped bordered hover responsive size="sm" className="mt-2">
                 <thead>
                     <tr>
-                        <th>Nombre</th>
-                        <th>Posición</th>
-                        <th>Asistencias</th>
-                        <th>Faltas</th>
-                        <th>% Asistencia</th>
-                        <th>Motivos de faltas</th>
+                        <th style={{ width: "5%" }} className="text-center">#</th>
+                        <th style={{ width: "22%" }}>Jugador</th>
+                        <th style={{ width: "18%" }}>Posiciones</th>
+                        <th style={{ width: "12%" }}>Asistencias</th>
+                        <th style={{ width: "10%" }}>Faltas</th>
+                        <th style={{ width: "13%" }}>% Asist.</th>
+                        <th style={{ width: "7%" }} className="text-center">Motivos</th>
                     </tr>
                 </thead>
                 <tbody>
-                    {estadisticas.map((j) => (
-                        <tr key={j.id}>
-                            <td><b>{j.nombre}</b></td>
-                            <td>{j.posicion}</td>
-                            <td>
-                                {j.asistencias > 0
-                                    ? <Badge bg="primary" className="fs-6">{j.asistencias}</Badge>
-                                    : <span className="text-muted">-</span>}
-                            </td>
-                            <td>
-                                {j.faltas > 0
-                                    ? <Badge bg="danger" className="fs-6">{j.faltas}</Badge>
-                                    : <span className="text-muted">-</span>}
-                            </td>
-                            <td>
-                                <Badge bg={j.porcentaje >= 80 ? "success" : j.porcentaje >= 50 ? "warning" : "secondary"}>
-                                    {j.porcentaje}%
-                                </Badge>
-                            </td>
-                            <td style={{ fontSize: "0.95em" }}>
-                                {j.motivos.length > 0
-                                    ? j.motivos.join("; ")
-                                    : <span className="text-muted">-</span>
-                                }
-                            </td>
-                        </tr>
-                    ))}
+                    {datosOrdenados.map((j, i) => {
+                        const numero = j.numero ? `#${j.numero}` : "";
+                        const pos1 = getPosicionData(j.posicion);
+                        const pos2 = getPosicionData(j.posicionSecundaria);
+                        return (
+                            <tr key={j.id}>
+                                <td className="text-center">{i + 1}</td>
+                                <td>
+                                    <b>
+                                        {numero && <span className="me-1">{numero}</span>}
+                                        {j.nombre}
+                                    </b>
+                                </td>
+                                <td>
+                                    {pos1 && (
+                                        <Badge
+                                            bg={pos1.color}
+                                            className="me-1"
+                                            title={pos1.label}
+                                            style={{ minWidth: 32 }}
+                                        >
+                                            {pos1.value}
+                                        </Badge>
+                                    )}
+                                    {pos2 && pos2.value !== pos1?.value && (
+                                        <Badge
+                                            bg={pos2.color}
+                                            title={pos2.label}
+                                            style={{ minWidth: 32 }}
+                                        >
+                                            {pos2.value}
+                                        </Badge>
+                                    )}
+                                </td>
+                                <td>
+                                    <Badge bg="success" className="fs-6">
+                                        {j.asistencias}
+                                    </Badge>
+                                </td>
+                                <td>
+                                    {j.faltas > 0 && (
+                                        <Badge bg="danger" className="fs-6">
+                                            {j.faltas}
+                                        </Badge>
+                                    )}
+                                </td>
+                                <td>
+                                    <Badge bg={j.porcentaje >= 80 ? "success" : j.porcentaje >= 50 ? "warning" : "secondary"}>
+                                        {j.porcentaje}%
+                                    </Badge>
+                                </td>
+                                <td className="text-center">
+                                    {j.motivos.length > 0 &&
+                                        <OverlayTrigger
+                                            placement="top"
+                                            overlay={
+                                                <Tooltip>
+                                                    {j.motivos.map((m, idx) => (
+                                                        <div key={idx}>• {m}</div>
+                                                    ))}
+                                                </Tooltip>
+                                            }
+                                        >
+                                            <span>
+                                                <FaRegCommentDots style={{ cursor: "pointer" }} />
+                                            </span>
+                                        </OverlayTrigger>
+                                    }
+                                </td>
+                            </tr>
+                        );
+                    })}
                 </tbody>
             </Table>
             <div className="mt-3 small text-secondary">

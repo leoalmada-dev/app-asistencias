@@ -1,4 +1,3 @@
-// src/components/PartidosStats.jsx
 import { useEffect, useState, useRef } from "react";
 import { obtenerJugadores, obtenerPartidos, obtenerEquipos } from "../hooks/useDB";
 import { Table, Badge, Row, Col, Form, Button } from "react-bootstrap";
@@ -9,6 +8,7 @@ import {
 import { exportarEstadisticasAExcel } from "../utils/exportarEstadisticas";
 import { exportarGraficoComoPNG } from "../utils/exportarGraficoComoPNG";
 import { FaFileExcel, FaDownload, FaChartBar } from "react-icons/fa6";
+import { CATEGORIAS_POSICION } from "../data/posiciones";
 
 const NOMBRES_MESES = [
     "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
@@ -17,7 +17,7 @@ const NOMBRES_MESES = [
 
 export default function PartidosStats() {
     const [estadisticas, setEstadisticas] = useState([]);
-    const [orden, setOrden] = useState("minutosTotales");
+    const [orden, setOrden] = useState("numero");
     const { equipoId } = useEquipo();
 
     const [resumen, setResumen] = useState({
@@ -26,15 +26,16 @@ export default function PartidosStats() {
         totalGolesContra: 0,
     });
 
+    // Selección automática de año y mes actual
+    const now = new Date();
     const [filtros, setFiltros] = useState({
-        anio: "",
-        mes: "",
+        anio: now.getFullYear().toString(),
+        mes: String(now.getMonth() + 1).padStart(2, '0'),
     });
     const [aniosDisponibles, setAniosDisponibles] = useState([]);
     const [mesesDisponibles, setMesesDisponibles] = useState([]);
     const [equipos, setEquipos] = useState([]);
 
-    // Refs para exportar las gráficas como imágenes
     const graficoMinutosRef = useRef(null);
     const graficoGolesRef = useRef(null);
 
@@ -42,14 +43,12 @@ export default function PartidosStats() {
         obtenerEquipos().then(setEquipos);
     }, []);
 
-    // Para el nombre del archivo y el título de exportación
     const equipoNombre = equipos.find(e => e.id === equipoId)?.nombre || "SinEquipo";
     const filtroMesNombre = filtros.mes ? NOMBRES_MESES[parseInt(filtros.mes, 10) - 1] : "Todos";
     const filtroAnio = filtros.anio || "Todos";
     const nombreArchivo = `Partidos_${filtroMesNombre}_${filtroAnio}_${equipoNombre}`;
     const titulo = `Estadísticas de Partidos (${equipoNombre} - ${filtroMesNombre} ${filtroAnio})`;
 
-    // Actualiza filtros disponibles
     useEffect(() => {
         const cargarFiltros = async () => {
             const partidos = (await obtenerPartidos()).filter(p => p.equipoId === equipoId);
@@ -111,7 +110,9 @@ export default function PartidosStats() {
                 return {
                     id: jugador.id,
                     nombre: jugador.nombre,
+                    numero: jugador.numero,
                     posicion: jugador.posicion,
+                    posicionSecundaria: jugador.posicionSecundaria,
                     minutosTotales,
                     partidosJugados,
                     promedioMin: partidosJugados ? Math.round(minutosTotales / partidosJugados) : 0,
@@ -132,23 +133,17 @@ export default function PartidosStats() {
         cargarEstadisticas();
     }, [equipoId, filtros]);
 
-    // Ordenar por campo seleccionado
     const datosOrdenados = [...estadisticas].sort((a, b) => {
+        if (orden === "numero") {
+            const numA = parseInt(a.numero) || 999;
+            const numB = parseInt(b.numero) || 999;
+            return numA - numB;
+        }
         if (orden === "minutosTotales") return b.minutosTotales - a.minutosTotales;
         if (orden === "goles") return b.goles - a.goles;
         if (orden === "porcentaje") return b.porcentaje - a.porcentaje;
         return b.partidosJugados - a.partidosJugados;
     });
-
-    // Para gráficos
-    const datosGraficoMinutos = estadisticas.map(j => ({
-        nombre: j.nombre,
-        Minutos: j.minutosTotales
-    }));
-    const datosGraficoGoles = estadisticas.map(j => ({
-        nombre: j.nombre,
-        Goles: j.goles
-    }));
 
     // Exportar tabla
     const handleExportarExcel = () => {
@@ -174,6 +169,14 @@ export default function PartidosStats() {
     const handleExportarGraficoGoles = () => {
         exportarGraficoComoPNG(graficoGolesRef, `Goles_${equipoNombre}_${filtroMesNombre}_${filtroAnio}`);
     };
+
+    function getPosicionData(valor) {
+        for (const cat of CATEGORIAS_POSICION) {
+            const found = cat.posiciones.find(p => p.value === valor);
+            if (found) return found;
+        }
+        return null;
+    }
 
     return (
         <div>
@@ -248,7 +251,7 @@ export default function PartidosStats() {
                     </div>
                     <div ref={graficoMinutosRef}>
                         <ResponsiveContainer width="100%" height={250}>
-                            <BarChart data={datosGraficoMinutos} margin={{ left: -20 }}>
+                            <BarChart data={estadisticas.map(j => ({ nombre: j.nombre, Minutos: j.minutosTotales }))} margin={{ left: -20 }}>
                                 <CartesianGrid strokeDasharray="3 3" />
                                 <XAxis dataKey="nombre" />
                                 <YAxis />
@@ -273,7 +276,7 @@ export default function PartidosStats() {
                     </div>
                     <div ref={graficoGolesRef}>
                         <ResponsiveContainer width="100%" height={250}>
-                            <BarChart data={datosGraficoGoles} margin={{ left: -20 }}>
+                            <BarChart data={estadisticas.map(j => ({ nombre: j.nombre, Goles: j.goles }))} margin={{ left: -20 }}>
                                 <CartesianGrid strokeDasharray="3 3" />
                                 <XAxis dataKey="nombre" />
                                 <YAxis />
@@ -286,15 +289,20 @@ export default function PartidosStats() {
                 </Col>
             </Row>
 
-            {/* Tabla + Exportar */}
+            {/* Tabla ajustada y numerada */}
             <div className="d-flex justify-content-between align-items-center mb-2">
                 <div>
                     <Form.Label className="mb-0">Ordenar por:</Form.Label>
-                    <Form.Select size="sm" style={{ width: 180, display: "inline-block", marginLeft: 8 }} value={orden} onChange={e => setOrden(e.target.value)}>
+                    <Form.Select
+                        size="sm"
+                        style={{ width: 180, display: "inline-block", marginLeft: 8 }}
+                        value={orden}
+                        onChange={e => setOrden(e.target.value)}
+                    >
+                        <option value="numero">Número de camiseta</option>
                         <option value="minutosTotales">Minutos jugados</option>
                         <option value="goles">Goles convertidos</option>
                         <option value="partidosJugados">Partidos jugados</option>
-                        <option value="porcentaje">% partidos jugados</option>
                     </Form.Select>
                 </div>
                 <Button
@@ -309,40 +317,73 @@ export default function PartidosStats() {
                 </Button>
             </div>
 
-            <Table striped bordered hover responsive className="mt-2">
+            <Table striped bordered hover responsive size="sm" className="mt-3">
                 <thead>
                     <tr>
-                        <th>Nombre</th>
-                        <th>Posición</th>
-                        <th>Minutos</th>
-                        <th>Partidos</th>
-                        <th>Prom. min/partido</th>
-                        <th>Goles</th>
-                        <th>% Partidos jugados</th>
+                        <th style={{ width: "5%" }} className="text-center">#</th>
+                        <th style={{ width: "22%" }}>Jugador</th>
+                        <th style={{ width: "18%" }}>Posiciones</th>
+                        <th style={{ width: "11%" }}>Minutos</th>
+                        <th style={{ width: "9%" }}>Partidos</th>
+                        <th style={{ width: "12%" }}>Prom. min/partido</th>
+                        <th style={{ width: "8%" }}>Goles</th>
+                        <th style={{ width: "12%" }}>% Jugados</th>
                     </tr>
                 </thead>
                 <tbody>
-                    {datosOrdenados.map((j) => (
-                        <tr key={j.id}>
-                            <td><b>{j.nombre}</b></td>
-                            <td>{j.posicion}</td>
-                            <td>{j.minutosTotales}</td>
-                            <td>{j.partidosJugados}</td>
-                            <td>{j.promedioMin}</td>
-                            <td>
-                                {j.goles > 0
-                                    ? <Badge bg="success" className="fs-6">{j.goles} ⚽</Badge>
-                                    : <span className="text-muted">-</span>}
-                            </td>
-                            <td>
-                                <Badge bg={j.porcentaje >= 80 ? "success" : j.porcentaje >= 50 ? "warning" : "secondary"}>
-                                    {j.porcentaje}%
-                                </Badge>
-                            </td>
-                        </tr>
-                    ))}
+                    {datosOrdenados.map((j, i) => {
+                        const numero = j.numero ? `#${j.numero}` : "";
+                        const pos1 = getPosicionData(j.posicion);
+                        const pos2 = getPosicionData(j.posicionSecundaria);
+                        return (
+                            <tr key={j.id}>
+                                <td className="text-center">{i + 1}</td>
+                                <td>
+                                    <b>
+                                        {numero && <span className="me-1">{numero}</span>}
+                                        {j.nombre}
+                                    </b>
+                                </td>
+                                <td>
+                                    {pos1 && (
+                                        <Badge
+                                            bg={pos1.color}
+                                            className="me-1"
+                                            title={pos1.label}
+                                            style={{ minWidth: 32 }}
+                                        >
+                                            {pos1.value}
+                                        </Badge>
+                                    )}
+                                    {pos2 && pos2.value !== pos1?.value && (
+                                        <Badge
+                                            bg={pos2.color}
+                                            title={pos2.label}
+                                            style={{ minWidth: 32 }}
+                                        >
+                                            {pos2.value}
+                                        </Badge>
+                                    )}
+                                </td>
+                                <td>{j.minutosTotales}</td>
+                                <td>{j.partidosJugados}</td>
+                                <td>{j.promedioMin}</td>
+                                <td>
+                                    {j.goles > 0
+                                        ? <Badge bg="success" className="fs-6">{j.goles} ⚽</Badge>
+                                        : <span className="text-muted">-</span>}
+                                </td>
+                                <td>
+                                    <Badge bg={j.porcentaje >= 80 ? "success" : j.porcentaje >= 50 ? "warning" : "secondary"}>
+                                        {j.porcentaje}%
+                                    </Badge>
+                                </td>
+                            </tr>
+                        );
+                    })}
                 </tbody>
             </Table>
+
             <div className="mt-3 small text-secondary">
                 <span>
                     <b>Tip:</b> Podés filtrar por mes y año, exportar la tabla (Excel) y descargar cada gráfico en PNG.
