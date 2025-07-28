@@ -7,6 +7,7 @@ import {
     obtenerJugadores
 } from "../hooks/useDB";
 import PartidoForm from "../components/PartidoForm";
+import ModalConfirmarEliminacion from "../components/ModalConfirmarEliminacion";
 import { Table, Button, Alert } from "react-bootstrap";
 import { FaEdit, FaTrash, FaEye } from "react-icons/fa";
 import { useEquipo } from "../context/EquipoContext";
@@ -17,9 +18,12 @@ export default function Partidos() {
     const [partidos, setPartidos] = useState([]);
     const [editando, setEditando] = useState(null);
     const [jugadores, setJugadores] = useState([]);
-    const { equipoId } = useEquipo();
+    const [showModal, setShowModal] = useState(false);
+    const [partidoAEliminar, setPartidoAEliminar] = useState(null);
+    const [loadingEliminar, setLoadingEliminar] = useState(false);
 
-    const formRef = useRef(); // Referencia al formulario
+    const { equipoId } = useEquipo();
+    const formRef = useRef();
 
     const cargar = async () => {
         const listaPartidos = await obtenerPartidos();
@@ -46,11 +50,20 @@ export default function Partidos() {
         setEditando(null);
     };
 
-    const handleEliminar = async (id) => {
-        if (window.confirm("¿Eliminar este partido?")) {
-            await eliminarPartido(id);
-            cargar();
-        }
+    // Nuevo: abrir el modal con el partido a eliminar
+    const handleEliminar = (partido) => {
+        setPartidoAEliminar(partido);
+        setShowModal(true);
+    };
+
+    // Confirmar eliminación después del modal
+    const confirmarEliminar = async () => {
+        setLoadingEliminar(true);
+        await eliminarPartido(partidoAEliminar.id);
+        setLoadingEliminar(false);
+        setShowModal(false);
+        setPartidoAEliminar(null);
+        cargar();
     };
 
     const handleEditar = (partido) => {
@@ -137,8 +150,11 @@ export default function Partidos() {
                                             size="sm" onClick={() => handleEditar(p)}>
                                             <FaEdit />
                                         </Button>
-                                        <Button variant="outline-danger"
-                                            size="sm" onClick={() => handleEliminar(p.id)}>
+                                        <Button
+                                            variant="outline-danger"
+                                            size="sm"
+                                            onClick={() => handleEliminar(p)}
+                                        >
                                             <FaTrash />
                                         </Button>
                                     </td>
@@ -148,6 +164,16 @@ export default function Partidos() {
                     </tbody>
                 </Table>
             </div>
+
+            {/* Modal Confirmación eliminación */}
+            <ModalConfirmarEliminacion
+                show={showModal}
+                onHide={() => setShowModal(false)}
+                onConfirm={confirmarEliminar}
+                nombre={partidoAEliminar?.rival || partidoAEliminar?.fecha}
+                tipo="partido"
+                loading={loadingEliminar}
+            />
         </div>
     );
 }

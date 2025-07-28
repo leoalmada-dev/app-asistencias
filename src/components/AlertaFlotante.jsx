@@ -16,7 +16,7 @@ export default function AlertaFlotante({ show, mensaje, tipo = "success", onClos
             variant={tipo}
             className="position-fixed shadow"
             style={{
-                top: 16,
+                bottom: 16,
                 right: 16,
                 minWidth: 280,
                 zIndex: 1050,
