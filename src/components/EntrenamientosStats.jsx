@@ -202,7 +202,7 @@ export default function EntrenamientosStats() {
 
             {/* Gráfico */}
             <Row className="mb-4">
-                <Col md={8} lg={6}>
+                <Col md={12} lg={12}>
                     <div className="d-flex align-items-center justify-content-between">
                         <h6 className="mb-0">Asistencias por jugador</h6>
                         <Button
