@@ -67,11 +67,11 @@ ultima duracion x defecto
 numerar las listas de jugadores
 achicar motivo de las faltas practicas estadisticas
 grafica partidos ajustar al "ordenar por"
+actualizar listados para ver jugadores sin numero
 
 
 jugadores activos estan filtrados?
 implementacion de alertas de confirmacion (x ahora solo en jugadores)
-actualizar listados para ver jugadores sin numero
 miunutos + descuentos
 estadisticas de partidos filtrados x campeonato
 calculo de cambios en baby, entrar nuevamente

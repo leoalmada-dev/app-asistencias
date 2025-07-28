@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import { Form, Button, Row, Col, Table } from "react-bootstrap";
-import { obtenerJugadores } from "../hooks/useDB";
+import { obtenerJugadores, obtenerCampeonatos } from "../hooks/useDB"; // 👈 nuevo import
 import { useEquipo } from "../context/EquipoContext";
-import { FaTimes, FaTrash } from "react-icons/fa";
+import { FaTimes } from "react-icons/fa";
 
 export default function PartidoForm({ onSave, initialData = {}, modoEdicion = false, onCancel }) {
     const [form, setForm] = useState({
@@ -19,12 +19,18 @@ export default function PartidoForm({ onSave, initialData = {}, modoEdicion = fa
     });
 
     const [jugadores, setJugadores] = useState([]);
+    const [campeonatos, setCampeonatos] = useState([]);
     const { equipoId } = useEquipo();
 
     useEffect(() => {
-        obtenerJugadores().then(js => {
-            setJugadores(js.filter(j => j.equipoId === equipoId));
-        });
+        if (equipoId) {
+            obtenerJugadores().then(js => {
+                setJugadores(js.filter(j => j.equipoId === equipoId));
+            });
+            obtenerCampeonatos(equipoId).then(cs => {
+                setCampeonatos(cs.filter(c => c.activo));
+            });
+        }
     }, [equipoId]);
 
     useEffect(() => {
@@ -65,6 +71,16 @@ export default function PartidoForm({ onSave, initialData = {}, modoEdicion = fa
             });
         }
     }, [initialData, modoEdicion]);
+
+    // Cambiar tipo reinicia torneo si se cambia de campeonato a amistoso
+    const handleTipoChange = (e) => {
+        const value = e.target.value;
+        setForm(f => ({
+            ...f,
+            tipo: value,
+            torneo: value === "amistoso" ? "Amistoso" : "",
+        }));
+    };
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -138,7 +154,10 @@ export default function PartidoForm({ onSave, initialData = {}, modoEdicion = fa
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        onSave(form);
+        // Si es amistoso, siempre guardar "Amistoso" como torneo
+        const envio = { ...form, torneo: form.tipo === "amistoso" ? "Amistoso" : form.torneo };
+        onSave(envio);
+
         localStorage.setItem("ultimaHoraPartido", form.hora);
         localStorage.setItem("ultimaDuracionPartido", form.duracion.toString());
 
@@ -202,7 +221,7 @@ export default function PartidoForm({ onSave, initialData = {}, modoEdicion = fa
                     <Col md={6}>
                         <Form.Group className="mb-3">
                             <Form.Label>Tipo</Form.Label>
-                            <Form.Select name="tipo" value={form.tipo} onChange={handleChange}>
+                            <Form.Select name="tipo" value={form.tipo} onChange={handleTipoChange}>
                                 <option value="amistoso">Amistoso</option>
                                 <option value="campeonato">Campeonato</option>
                             </Form.Select>
@@ -210,8 +229,34 @@ export default function PartidoForm({ onSave, initialData = {}, modoEdicion = fa
                     </Col>
                     <Col md={6}>
                         <Form.Group className="mb-3">
-                            <Form.Label>Torneo</Form.Label>
-                            <Form.Control name="torneo" value={form.torneo} onChange={handleChange} />
+                            <Form.Label>
+                                {form.tipo === "campeonato" ? "Campeonato" : "Torneo"}
+                            </Form.Label>
+                            {form.tipo === "campeonato" ? (
+                                <Form.Select
+                                    name="torneo"
+                                    value={form.torneo}
+                                    onChange={handleChange}
+                                    required
+                                >
+                                    <option value="">Seleccionar campeonato...</option>
+                                    {campeonatos.length === 0 && (
+                                        <option value="" disabled>No hay campeonatos activos</option>
+                                    )}
+                                    {campeonatos.map(c => (
+                                        <option key={c.id} value={c.nombre}>
+                                            {c.nombre} ({c.anio})
+                                        </option>
+                                    ))}
+                                </Form.Select>
+                            ) : (
+                                <Form.Control
+                                    name="torneo"
+                                    value="Amistoso"
+                                    disabled
+                                    readOnly
+                                />
+                            )}
                         </Form.Group>
                     </Col>
                 </Row>
@@ -334,7 +379,7 @@ export default function PartidoForm({ onSave, initialData = {}, modoEdicion = fa
                                 </td>
                                 <td className="text-center align-middle p-0">
                                     <Button
-                                        variant="Link"
+                                        variant="link"
                                         size="sm"
                                         type="button"
                                         className="text-danger py-1"

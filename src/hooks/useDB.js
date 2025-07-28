@@ -66,3 +66,24 @@ export const migrarObservacionesANotas = async () => {
   }
   console.log("Migración de observaciones a notasEntrenador completada.");
 };
+
+
+// ─── Campeonatos ─────────────────────
+export const obtenerCampeonatos = async (equipoId = null) => {
+  if (equipoId) {
+    return await db.campeonatos.where('equipoId').equals(equipoId).toArray();
+  }
+  return await db.campeonatos.toArray();
+};
+
+export const agregarCampeonato = async (campeonato) => {
+  return await db.campeonatos.add(campeonato);
+};
+
+export const actualizarCampeonato = async (id, campeonato) => {
+  return await db.campeonatos.update(id, campeonato);
+};
+
+export const eliminarCampeonato = async (id) => {
+  return await db.campeonatos.delete(id);
+};

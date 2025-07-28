@@ -1,3 +1,4 @@
+// src/components/PartidosStats.jsx
 import { useEffect, useState, useRef } from "react";
 import { obtenerJugadores, obtenerPartidos, obtenerEquipos } from "../hooks/useDB";
 import { Table, Badge, Row, Col, Form, Button } from "react-bootstrap";
@@ -15,32 +16,29 @@ const NOMBRES_MESES = [
     "Julio", "Agosto", "Setiembre", "Octubre", "Noviembre", "Diciembre"
 ];
 
-// --- Para mantener el orden de posiciones ---
-const POSICION_ORDEN = (() => {
-    let orden = {};
-    let idx = 0;
+function getPosicionData(valor) {
     for (const cat of CATEGORIAS_POSICION) {
-        for (const p of cat.posiciones) {
-            orden[p.value] = idx++;
-        }
+        const found = cat.posiciones.find(p => p.value === valor);
+        if (found) return found;
     }
-    return orden;
-})();
+    return null;
+}
 
 const COLS = [
-    { key: "nombre", label: "Jugador", width: "23%", align: "start", orderable: true },
+    { key: "index", label: "#", width: "5%", align: "center", orderable: false },
+    { key: "jugador", label: "Jugador", width: "27%", align: "start", orderable: true },
     { key: "numero", label: "Nro", width: "7%", align: "center", orderable: true },
-    { key: "posiciones", label: "Posiciones", width: "14%", align: "center", orderable: true },
-    { key: "minutosTotales", label: "Minutos", width: "12%", align: "center", orderable: true },
-    { key: "partidosJugados", label: "Partidos", width: "10%", align: "center", orderable: true },
-    { key: "promedioMin", label: "Prom. min/partido", width: "13%", align: "center", orderable: true },
-    { key: "goles", label: "Goles", width: "8%", align: "center", orderable: true },
-    { key: "porcentaje", label: "% Jugados", width: "8%", align: "center", orderable: true },
+    { key: "posiciones", label: "Posiciones", width: "13%", align: "center", orderable: true },
+    { key: "minutosTotales", label: "Minutos", width: "11%", align: "center", orderable: true },
+    { key: "partidosJugados", label: "Partidos", width: "8%", align: "center", orderable: true },
+    { key: "promedioMin", label: "min/partido", width: "12%", align: "center", orderable: true },
+    { key: "goles", label: "Goles", width: "7%", align: "center", orderable: true },
+    { key: "porcentaje", label: "%Jugados", width: "8%", align: "center", orderable: true }
 ];
 
 export default function PartidosStats() {
     const [estadisticas, setEstadisticas] = useState([]);
-    const [sortBy, setSortBy] = useState("nombre");
+    const [orden, setOrden] = useState("numero");
     const [sortDir, setSortDir] = useState("asc");
     const { equipoId } = useEquipo();
 
@@ -50,13 +48,16 @@ export default function PartidosStats() {
         totalGolesContra: 0,
     });
 
+    // Año, mes y torneo actuales por defecto
     const now = new Date();
     const [filtros, setFiltros] = useState({
         anio: now.getFullYear().toString(),
         mes: String(now.getMonth() + 1).padStart(2, '0'),
     });
+    const [filtroTorneo, setFiltroTorneo] = useState("");
     const [aniosDisponibles, setAniosDisponibles] = useState([]);
     const [mesesDisponibles, setMesesDisponibles] = useState([]);
+    const [torneosDisponibles, setTorneosDisponibles] = useState([]);
     const [equipos, setEquipos] = useState([]);
 
     const graficoMinutosRef = useRef(null);
@@ -69,26 +70,34 @@ export default function PartidosStats() {
     const equipoNombre = equipos.find(e => e.id === equipoId)?.nombre || "SinEquipo";
     const filtroMesNombre = filtros.mes ? NOMBRES_MESES[parseInt(filtros.mes, 10) - 1] : "Todos";
     const filtroAnio = filtros.anio || "Todos";
-    const nombreArchivo = `Partidos_${filtroMesNombre}_${filtroAnio}_${equipoNombre}`;
-    const titulo = `Estadísticas de Partidos (${equipoNombre} - ${filtroMesNombre} ${filtroAnio})`;
+    const filtroTorneoNombre = filtroTorneo || "Todos";
+    const nombreArchivo = `Partidos_${filtroMesNombre}_${filtroAnio}_${filtroTorneoNombre}_${equipoNombre}`;
+    const titulo = `Estadísticas de Partidos (${equipoNombre} - ${filtroMesNombre} ${filtroAnio}${filtroTorneo ? " - " + filtroTorneo : ""})`;
 
+    // Filtros año/mes/campeonato
     useEffect(() => {
         const cargarFiltros = async () => {
             const partidos = (await obtenerPartidos()).filter(p => p.equipoId === equipoId);
             const anios = Array.from(new Set(partidos.map(p => (p.fecha || "").substring(0, 4)))).filter(a => a);
             setAniosDisponibles(anios);
+            let partidosFiltrados = partidos;
             if (filtros.anio) {
-                const meses = Array.from(new Set(
-                    partidos
-                        .filter(p => (p.fecha || "").startsWith(filtros.anio))
-                        .map(p => (p.fecha || "").substring(5, 7))
-                ));
-                setMesesDisponibles(meses.filter(m => m));
+                partidosFiltrados = partidosFiltrados.filter(p => (p.fecha || "").startsWith(filtros.anio));
             }
+            if (filtros.mes) {
+                partidosFiltrados = partidosFiltrados.filter(p => (p.fecha || "").substring(5, 7) === filtros.mes);
+            }
+            const meses = Array.from(new Set(
+                partidos.filter(p => (p.fecha || "").startsWith(filtros.anio)).map(p => (p.fecha || "").substring(5, 7))
+            ));
+            setMesesDisponibles(meses.filter(m => m));
+            const torneosUnicos = Array.from(new Set(partidosFiltrados.map(p => p.torneo).filter(Boolean)));
+            setTorneosDisponibles(torneosUnicos);
         };
         cargarFiltros();
-    }, [equipoId, filtros.anio]);
+    }, [equipoId, filtros.anio, filtros.mes]);
 
+    // Estadísticas filtradas y cálculo
     useEffect(() => {
         const cargarEstadisticas = async () => {
             const jugadores = (await obtenerJugadores()).filter(j => j.equipoId === equipoId);
@@ -99,6 +108,9 @@ export default function PartidosStats() {
             }
             if (filtros.mes) {
                 partidos = partidos.filter(p => (p.fecha || "").substring(5, 7) === filtros.mes);
+            }
+            if (filtroTorneo) {
+                partidos = partidos.filter(p => p.torneo === filtroTorneo);
             }
 
             let totalGoles = 0;
@@ -154,37 +166,39 @@ export default function PartidosStats() {
         };
 
         cargarEstadisticas();
-    }, [equipoId, filtros]);
+    }, [equipoId, filtros, filtroTorneo]);
 
-    // --- ORDENAMIENTO Y DATOS ORDENADOS ---
+    // Ordenación
     const datosOrdenados = [...estadisticas].sort((a, b) => {
-        let valA, valB;
-        if (sortBy === "numero") {
-            valA = parseInt(a.numero) || 999;
-            valB = parseInt(b.numero) || 999;
-        } else if (sortBy === "nombre") {
-            valA = (a.nombre || "").toLowerCase();
-            valB = (b.nombre || "").toLowerCase();
-        } else if (sortBy === "posiciones") {
-            // Ordenar por POSICION_ORDEN de la principal, o secundaria si no tiene principal
-            const pa = a.posicion && POSICION_ORDEN[a.posicion] !== undefined ? POSICION_ORDEN[a.posicion] : 999;
-            const sa = a.posicionSecundaria && POSICION_ORDEN[a.posicionSecundaria] !== undefined ? POSICION_ORDEN[a.posicionSecundaria] : 999;
-            const pb = b.posicion && POSICION_ORDEN[b.posicion] !== undefined ? POSICION_ORDEN[b.posicion] : 999;
-            const sb = b.posicionSecundaria && POSICION_ORDEN[b.posicionSecundaria] !== undefined ? POSICION_ORDEN[b.posicionSecundaria] : 999;
-            valA = Math.min(pa, sa);
-            valB = Math.min(pb, sb);
-        } else if (sortBy === "minutosTotales" || sortBy === "promedioMin" || sortBy === "goles" || sortBy === "partidosJugados" || sortBy === "porcentaje") {
-            valA = a[sortBy] ?? 0;
-            valB = b[sortBy] ?? 0;
-        } else {
-            valA = 0; valB = 0;
+        if (orden === "numero") {
+            const numA = parseInt(a.numero) || 999;
+            const numB = parseInt(b.numero) || 999;
+            return sortDir === "asc" ? numA - numB : numB - numA;
         }
-        if (valA < valB) return sortDir === "asc" ? -1 : 1;
-        if (valA > valB) return sortDir === "asc" ? 1 : -1;
+        if (orden === "jugador") {
+            return sortDir === "asc"
+                ? (a.nombre || "").localeCompare(b.nombre || "")
+                : (b.nombre || "").localeCompare(a.nombre || "");
+        }
+        if (orden === "minutosTotales") return sortDir === "asc" ? a.minutosTotales - b.minutosTotales : b.minutosTotales - a.minutosTotales;
+        if (orden === "goles") return sortDir === "asc" ? a.goles - b.goles : b.goles - a.goles;
+        if (orden === "porcentaje") return sortDir === "asc" ? a.porcentaje - b.porcentaje : b.porcentaje - a.porcentaje;
+        if (orden === "partidosJugados") return sortDir === "asc" ? a.partidosJugados - b.partidosJugados : b.partidosJugados - a.partidosJugados;
+        if (orden === "posiciones") {
+            // Orden por posición principal (según el orden en CATEGORIAS_POSICION)
+            const posA = getPosicionData(a.posicion);
+            const posB = getPosicionData(b.posicion);
+            if (!posA && !posB) return 0;
+            if (!posA) return 1;
+            if (!posB) return -1;
+            const idxA = CATEGORIAS_POSICION.flatMap(cat => cat.posiciones).findIndex(p => p.value === posA.value);
+            const idxB = CATEGORIAS_POSICION.flatMap(cat => cat.posiciones).findIndex(p => p.value === posB.value);
+            return sortDir === "asc" ? idxA - idxB : idxB - idxA;
+        }
         return 0;
     });
 
-    // --- DATOS PARA LOS GRÁFICOS ORDENADOS SEGÚN LA TABLA ---
+    // Para gráficos (ordenados igual que la tabla)
     const datosGraficoMinutos = datosOrdenados.map(j => ({
         nombre: j.numero ? `#${j.numero} ${j.nombre}` : j.nombre,
         Minutos: j.minutosTotales
@@ -199,8 +213,9 @@ export default function PartidosStats() {
         exportarEstadisticasAExcel({
             datosTabla: datosOrdenados.map(j => ({
                 Nombre: j.nombre,
-                "Nro": j.numero || "-",
+                Número: j.numero,
                 Posición: j.posicion,
+                "Posición secundaria": j.posicionSecundaria,
                 Minutos: j.minutosTotales,
                 Partidos: j.partidosJugados,
                 "Prom. min/partido": j.promedioMin,
@@ -220,35 +235,15 @@ export default function PartidosStats() {
         exportarGraficoComoPNG(graficoGolesRef, `Goles_${equipoNombre}_${filtroMesNombre}_${filtroAnio}`);
     };
 
-    function getPosicionData(valor) {
-        for (const cat of CATEGORIAS_POSICION) {
-            const found = cat.posiciones.find(p => p.value === valor);
-            if (found) return found;
-        }
-        return null;
-    }
-
-    // --- Renderiza la flecha SOLO si es la columna activa ---
+    // Icono sort SOLO en la columna activa
     const renderSortIcon = (colKey) => {
-        if (sortBy !== colKey) return null;
+        if (orden !== colKey) return null;
         return (
-            <span style={{ fontSize: "1em", marginLeft: 4, color: "#1976d2" }}>
+            <span style={{ fontSize: "1em", marginLeft: 3, color: "#0066cc" }}>
                 {sortDir === "asc" ? "▲" : "▼"}
             </span>
         );
     };
-
-    // --- Para sincronizar el select con los headers ---
-    const handleSelectOrden = (e) => setSortBy(e.target.value);
-
-    useEffect(() => {
-        // Siempre que cambia sortBy desde el select, que sea asc por defecto (menos partidos/goles/minutos: desc)
-        if (["minutosTotales", "goles", "partidosJugados", "porcentaje", "promedioMin"].includes(sortBy)) {
-            setSortDir("desc");
-        } else {
-            setSortDir("asc");
-        }
-    }, [sortBy]);
 
     return (
         <div>
@@ -274,7 +269,7 @@ export default function PartidosStats() {
                 <Form.Label className="mb-0">Mes:</Form.Label>
                 <Form.Select
                     size="sm"
-                    style={{ width: 140 }}
+                    style={{ width: 110 }}
                     value={filtros.mes}
                     onChange={e => setFiltros(f => ({ ...f, mes: e.target.value }))}
                     disabled={!filtros.anio}
@@ -286,6 +281,22 @@ export default function PartidosStats() {
                         </option>
                     ))}
                 </Form.Select>
+                {torneosDisponibles.length > 0 && (
+                    <>
+                        <Form.Label className="mb-0">Campeonato:</Form.Label>
+                        <Form.Select
+                            size="sm"
+                            style={{ width: 180 }}
+                            value={filtroTorneo}
+                            onChange={e => setFiltroTorneo(e.target.value)}
+                        >
+                            <option value="">Todos</option>
+                            {torneosDisponibles.map(t => (
+                                <option key={t} value={t}>{t}</option>
+                            ))}
+                        </Form.Select>
+                    </>
+                )}
             </div>
 
             {/* Resumen */}
@@ -361,9 +372,9 @@ export default function PartidosStats() {
                 </Col>
             </Row>
 
-            {/* Tabla ordenable */}
+            {/* Tabla ajustada y ordenable */}
             <div className="d-flex justify-content-between align-items-center mb-2">
-                <h5 className="mb-0 me-3">Listado de jugadores</h5>
+                <div className="small text-secondary"><b>Tip:</b> Hacé clic en el encabezado para ordenar la tabla. Exportá la tabla o los gráficos desde los íconos de la derecha.</div>
                 <Button
                     size="sm"
                     variant="link"
@@ -376,10 +387,9 @@ export default function PartidosStats() {
                 </Button>
             </div>
 
-            <Table striped bordered hover responsive size="sm" className="mt-3">
+            <Table striped bordered hover responsive size="sm" className="mt-2">
                 <thead>
-                    <tr className="text-center">
-                        <th style={{ width: "5%" }}>#</th>
+                    <tr>
                         {COLS.map(col => (
                             <th
                                 key={col.key}
@@ -403,18 +413,18 @@ export default function PartidosStats() {
                                 }
                                 onClick={() => {
                                     if (!col.orderable) return;
-                                    if (sortBy === col.key) {
+                                    if (orden === col.key) {
                                         setSortDir(d => (d === "asc" ? "desc" : "asc"));
                                     } else {
-                                        setSortBy(col.key);
-                                        setSortDir(col.key === "nombre" ? "asc" : "desc");
+                                        setOrden(col.key);
+                                        setSortDir("asc");
                                     }
                                 }}
                                 role={col.orderable ? "button" : undefined}
                                 tabIndex={col.orderable ? 0 : undefined}
                             >
                                 {col.label}
-                                {renderSortIcon(col.key)}
+                                {col.orderable && renderSortIcon(col.key)}
                             </th>
                         ))}
                     </tr>
@@ -427,7 +437,9 @@ export default function PartidosStats() {
                             <tr key={j.id}>
                                 <td className="text-center">{i + 1}</td>
                                 <td className="text-start">
-                                    <b>{j.nombre}</b>
+                                    <b>
+                                        {j.nombre}
+                                    </b>
                                 </td>
                                 <td className="text-center">
                                     {j.numero ? <b>#{j.numero}</b> : <span className="text-muted">–</span>}
@@ -447,7 +459,7 @@ export default function PartidosStats() {
                                         <Badge
                                             bg={pos2.color}
                                             title={pos2.label}
-                                            style={{ minWidth: 32, marginLeft: 2 }}
+                                            style={{ minWidth: 32 }}
                                         >
                                             {pos2.value}
                                         </Badge>
@@ -471,12 +483,6 @@ export default function PartidosStats() {
                     })}
                 </tbody>
             </Table>
-
-            <div className="mt-3 small text-secondary">
-                <span>
-                    <b>Tip:</b> Hacé clic en los encabezados para ordenar la tabla. Podés filtrar por mes y año, exportar la tabla (Excel) y descargar cada gráfico en PNG.
-                </span>
-            </div>
         </div>
     );
 }

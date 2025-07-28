@@ -74,6 +74,9 @@ export default function EquipoForm({
                         </Button>
                     )}
                 </div>
+                <div className="text-secondary small mt-2">
+                    <b>Tip:</b> Al crear un equipo o categoría, se seleccionará automáticamente como equipo activo en toda la aplicación. Podrás asignarle jugadores, campeonatos y partidos. El equipo seleccionado actual se muestra arriba a la derecha.
+                </div>
             </fieldset>
         </Form>
     );

@@ -7,7 +7,7 @@ import {
 } from "../hooks/useDB";
 import JugadorForm from "../components/JugadorForm";
 import { Button, Table, Alert, Badge, Form, OverlayTrigger, Tooltip, Modal } from "react-bootstrap";
-import { FaEdit, FaTrash } from "react-icons/fa";
+import { FaBan, FaCheckCircle, FaEdit, FaTrash } from "react-icons/fa";
 import { useEquipo } from "../context/EquipoContext";
 import { getPosData } from "../utils/posiciones";
 import { CATEGORIAS_POSICION } from "../data/posiciones";
@@ -19,7 +19,6 @@ const COLS = [
     { key: "numero", label: "Nro", width: "10%", align: "center", orderable: true },
     { key: "posiciones", label: "Posiciones", width: "15%", align: "center", orderable: true },
     { key: "estado", label: "Estado", width: "15%", align: "center", orderable: true },
-    { key: "switch", label: "Switch", width: "8%", align: "center", orderable: false },
     { key: "acciones", label: "Acciones", width: "8%", align: "center", orderable: false }
 ];
 
@@ -152,11 +151,9 @@ export default function Jugadores() {
     });
 
     const textDeshabilitado = {
-        color: "#999",
-        opacity: 0.65,
-        pointerEvents: "none",
+        color: "#888",
+        opacity: 0.6,
         fontStyle: "italic",
-        userSelect: "none"
     };
 
     const ModalEliminar = () => (
@@ -288,10 +285,10 @@ export default function Jugadores() {
                             jugadoresOrdenados.map((j, idx) => {
                                 const isInactive = !j.activo;
                                 return (
-                                    <tr key={j.id}>
+                                    <tr key={j.id} style={isInactive ? textDeshabilitado : {}}>
                                         <td className="text-center">{idx + 1}</td>
-                                        <td className="text-start" style={isInactive ? textDeshabilitado : {}}>{j.nombre}</td>
-                                        <td className="text-center" style={isInactive ? textDeshabilitado : {}}>{j.numero}</td>
+                                        <td className="text-start">{j.nombre}</td>
+                                        <td className="text-center">{j.numero}</td>
                                         <td className="text-center">{renderPosiciones(j.posicion, j.posicionSecundaria, isInactive)}</td>
                                         <td className="text-center">
                                             <Badge
@@ -302,21 +299,12 @@ export default function Jugadores() {
                                             </Badge>
                                         </td>
                                         <td className="text-center">
-                                            <Form.Check
-                                                type="switch"
-                                                id={`switch-activo-${j.id}`}
-                                                checked={j.activo}
-                                                onChange={() => handleToggleActivo(j)}
-                                                label=""
-                                            />
-                                        </td>
-                                        <td className="text-center">
                                             <OverlayTrigger
                                                 placement="top"
                                                 overlay={
                                                     isInactive
-                                                        ? <Tooltip id={`tooltip-edit-${j.id}`}>No se puede editar ni eliminar un jugador inactivo</Tooltip>
-                                                        : <></>
+                                                        ? <Tooltip id={`tooltip-edit-${j.id}`}>No se puede editar un jugador inactivo</Tooltip>
+                                                        : <Tooltip id={`tooltip-edit-${j.id}`}>Editar jugador</Tooltip>
                                                 }
                                             >
                                                 <span>
@@ -338,15 +326,15 @@ export default function Jugadores() {
                                                 placement="top"
                                                 overlay={
                                                     isInactive
-                                                        ? <Tooltip id={`tooltip-del-${j.id}`}>No se puede editar ni eliminar un jugador inactivo</Tooltip>
-                                                        : <></>
+                                                        ? <Tooltip id={`tooltip-del-${j.id}`}>No se puede eliminar un jugador inactivo</Tooltip>
+                                                        :  <Tooltip id={`tooltip-edit-${j.id}`}>Eliminar jugador</Tooltip>
                                                 }
                                             >
                                                 <span>
                                                     <Button
                                                         variant="link"
                                                         size="sm"
-                                                        className="p-0 text-danger"
+                                                        className="me-2 p-0 text-danger"
                                                         onClick={() => {
                                                             if (j.activo) {
                                                                 setJugadorAEliminar(j);
@@ -362,6 +350,26 @@ export default function Jugadores() {
                                                     </Button>
                                                 </span>
                                             </OverlayTrigger>
+                                            <OverlayTrigger
+                                                placement="top"
+                                                overlay={
+                                                    <Tooltip>
+                                                        {j.activo ? "Desactivar jugador" : "Activar jugador"}
+                                                    </Tooltip>
+                                                }
+                                            >
+                                                <span>
+                                                    <Button
+                                                        variant="link"
+                                                        size="sm"
+                                                        className={`p-0 ${j.activo ? "text-success" : "text-secondary"}`}
+                                                        onClick={() => handleToggleActivo(j)}
+                                                        style={{ opacity: isInactive ? 0.6 : 1 }}
+                                                    >
+                                                        {j.activo ? <FaCheckCircle /> : <FaBan />}
+                                                    </Button>
+                                                </span>
+                                            </OverlayTrigger>
                                         </td>
                                     </tr>
                                 );
@@ -370,7 +378,7 @@ export default function Jugadores() {
                     </tbody>
                 </Table>
                 <div className="text-secondary small mt-2">
-                    <b>Tip:</b> Hacé clic en los títulos de las columnas para ordenar la tabla. Usá el switch para activar o desactivar jugadores rápidamente. Los inactivos se ven apagados, no pueden ser seleccionados, editados ni eliminados.
+                    <b>Tip:</b> Hacé clic en los títulos de las columnas para ordenar la tabla. Usá el ícono de <span className="text-success"><FaCheckCircle style={{ verticalAlign: "-2px" }} /></span> o <span className="text-secondary"><FaBan style={{ verticalAlign: "-2px" }} /></span> para activar o desactivar jugadores rápidamente. Los jugadores inactivos se ven apagados, no pueden ser seleccionados, editados ni eliminados.
                 </div>
             </div>
             <AlertaFlotante
