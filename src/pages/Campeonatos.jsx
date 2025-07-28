@@ -277,7 +277,7 @@ export default function Campeonatos() {
                                                 overlay={
                                                     isInactive
                                                         ? <Tooltip id={`tooltip-del-${c.id}`}>No se puede eliminar un campeonato inactivo</Tooltip>
-                                                        : <Tooltip id={`tooltip-edit-${c.id}`}>Eliminar campeonato</Tooltip>
+                                                        : <Tooltip id={`tooltip-edit-${c.id}`}>Eliminar campeonato (esta acción es irreversible)</Tooltip>
                                                 }>
                                                 <span>
                                                     <Button

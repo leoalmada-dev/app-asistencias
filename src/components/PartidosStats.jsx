@@ -8,8 +8,9 @@ import {
 } from "recharts";
 import { exportarEstadisticasAExcel } from "../utils/exportarEstadisticas";
 import { exportarGraficoComoPNG } from "../utils/exportarGraficoComoPNG";
-import { FaFileExcel, FaDownload, FaChartBar } from "react-icons/fa6";
+import { FaFileExcel, FaDownload, } from "react-icons/fa6";
 import { CATEGORIAS_POSICION } from "../data/posiciones";
+import { FaChartBar } from "react-icons/fa";
 
 const NOMBRES_MESES = [
     "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
@@ -253,49 +254,59 @@ export default function PartidosStats() {
             </h4>
 
             {/* Filtros */}
-            <div className="d-flex flex-wrap gap-3 align-items-center mb-4">
-                <Form.Label className="mb-0">Año:</Form.Label>
-                <Form.Select
-                    size="sm"
-                    style={{ width: 120 }}
-                    value={filtros.anio}
-                    onChange={e => setFiltros(f => ({ ...f, anio: e.target.value, mes: "" }))}
-                >
-                    <option value="">Todos</option>
-                    {aniosDisponibles.map(a => (
-                        <option key={a} value={a}>{a}</option>
-                    ))}
-                </Form.Select>
-                <Form.Label className="mb-0">Mes:</Form.Label>
-                <Form.Select
-                    size="sm"
-                    style={{ width: 110 }}
-                    value={filtros.mes}
-                    onChange={e => setFiltros(f => ({ ...f, mes: e.target.value }))}
-                    disabled={!filtros.anio}
-                >
-                    <option value="">Todos</option>
-                    {mesesDisponibles.map(m => (
-                        <option key={m} value={m}>
-                            {NOMBRES_MESES[parseInt(m, 10) - 1] || m}
-                        </option>
-                    ))}
-                </Form.Select>
-                {torneosDisponibles.length > 0 && (
-                    <>
-                        <Form.Label className="mb-0">Campeonato:</Form.Label>
+            <div className="row g-2 align-items-end mb-4">
+                {/* Año */}
+                <div className="col-6 col-md-3">
+                    <div className="d-flex flex-column">
+                        <Form.Label className="mb-1 text-secondary fw-semibold" style={{ opacity: 0.8, fontSize: "0.90em" }}>Año:</Form.Label>
                         <Form.Select
                             size="sm"
-                            style={{ width: 180 }}
-                            value={filtroTorneo}
-                            onChange={e => setFiltroTorneo(e.target.value)}
+                            value={filtros.anio}
+                            onChange={e => setFiltros(f => ({ ...f, anio: e.target.value, mes: "" }))}
                         >
                             <option value="">Todos</option>
-                            {torneosDisponibles.map(t => (
-                                <option key={t} value={t}>{t}</option>
+                            {aniosDisponibles.map(a => (
+                                <option key={a} value={a}>{a}</option>
                             ))}
                         </Form.Select>
-                    </>
+                    </div>
+                </div>
+                {/* Mes */}
+                <div className="col-6 col-md-3">
+                    <div className="d-flex flex-column">
+                        <Form.Label className="mb-1 text-secondary fw-semibold" style={{ opacity: 0.8, fontSize: "0.90em" }}>Mes:</Form.Label>
+                        <Form.Select
+                            size="sm"
+                            value={filtros.mes}
+                            onChange={e => setFiltros(f => ({ ...f, mes: e.target.value }))}
+                            disabled={!filtros.anio}
+                        >
+                            <option value="">Todos</option>
+                            {mesesDisponibles.map(m => (
+                                <option key={m} value={m}>
+                                    {NOMBRES_MESES[parseInt(m, 10) - 1] || m}
+                                </option>
+                            ))}
+                        </Form.Select>
+                    </div>
+                </div>
+                {/* Campeonato */}
+                {torneosDisponibles.length > 0 && (
+                    <div className="col-12 col-md-6">
+                        <div className="d-flex flex-column mt-2 mt-md-0">
+                            <Form.Label className="mb-1 text-secondary fw-semibold" style={{ opacity: 0.8, fontSize: "0.90em" }}>Campeonato:</Form.Label>
+                            <Form.Select
+                                size="sm"
+                                value={filtroTorneo}
+                                onChange={e => setFiltroTorneo(e.target.value)}
+                            >
+                                <option value="">Todos</option>
+                                {torneosDisponibles.map(t => (
+                                    <option key={t} value={t}>{t}</option>
+                                ))}
+                            </Form.Select>
+                        </div>
+                    </div>
                 )}
             </div>
 
@@ -371,10 +382,10 @@ export default function PartidosStats() {
                     </div>
                 </Col>
             </Row>
-
+<hr className="my-4" style={{ borderTop: "2px solid #888" }} />
             {/* Tabla ajustada y ordenable */}
             <div className="d-flex justify-content-between align-items-center mb-2">
-                <div className="small text-secondary"><b>Tip:</b> Hacé clic en el encabezado para ordenar la tabla. Exportá la tabla o los gráficos desde los íconos de la derecha.</div>
+                <h5 className="mb-0 me-3">Listado de jugadores</h5>
                 <Button
                     size="sm"
                     variant="link"
@@ -483,6 +494,11 @@ export default function PartidosStats() {
                     })}
                 </tbody>
             </Table>
+            <div className="mt-3 small text-secondary">
+                <span>
+                    <b>Tip:</b> Hacé clic en el encabezado para ordenar la tabla. Exportá la tabla o los gráficos desde los íconos de la derecha.
+                </span>
+            </div>
         </div>
     );
 }

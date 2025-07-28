@@ -327,7 +327,7 @@ export default function Jugadores() {
                                                 overlay={
                                                     isInactive
                                                         ? <Tooltip id={`tooltip-del-${j.id}`}>No se puede eliminar un jugador inactivo</Tooltip>
-                                                        :  <Tooltip id={`tooltip-edit-${j.id}`}>Eliminar jugador</Tooltip>
+                                                        :  <Tooltip id={`tooltip-edit-${j.id}`}>Eliminar jugador (esta acción es irreversible)</Tooltip>
                                                 }
                                             >
                                                 <span>
