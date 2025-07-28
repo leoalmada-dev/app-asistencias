@@ -1,4 +1,3 @@
-// src/components/PartidosStats.jsx
 import { useEffect, useState, useRef } from "react";
 import { obtenerJugadores, obtenerPartidos, obtenerEquipos } from "../hooks/useDB";
 import { Table, Badge, Row, Col, Form, Button } from "react-bootstrap";
@@ -16,9 +15,33 @@ const NOMBRES_MESES = [
     "Julio", "Agosto", "Setiembre", "Octubre", "Noviembre", "Diciembre"
 ];
 
+// --- Para mantener el orden de posiciones ---
+const POSICION_ORDEN = (() => {
+    let orden = {};
+    let idx = 0;
+    for (const cat of CATEGORIAS_POSICION) {
+        for (const p of cat.posiciones) {
+            orden[p.value] = idx++;
+        }
+    }
+    return orden;
+})();
+
+const COLS = [
+    { key: "nombre", label: "Jugador", width: "23%", align: "start", orderable: true },
+    { key: "numero", label: "Nro", width: "7%", align: "center", orderable: true },
+    { key: "posiciones", label: "Posiciones", width: "14%", align: "center", orderable: true },
+    { key: "minutosTotales", label: "Minutos", width: "12%", align: "center", orderable: true },
+    { key: "partidosJugados", label: "Partidos", width: "10%", align: "center", orderable: true },
+    { key: "promedioMin", label: "Prom. min/partido", width: "13%", align: "center", orderable: true },
+    { key: "goles", label: "Goles", width: "8%", align: "center", orderable: true },
+    { key: "porcentaje", label: "% Jugados", width: "8%", align: "center", orderable: true },
+];
+
 export default function PartidosStats() {
     const [estadisticas, setEstadisticas] = useState([]);
-    const [orden, setOrden] = useState("numero");
+    const [sortBy, setSortBy] = useState("nombre");
+    const [sortDir, setSortDir] = useState("asc");
     const { equipoId } = useEquipo();
 
     const [resumen, setResumen] = useState({
@@ -27,7 +50,6 @@ export default function PartidosStats() {
         totalGolesContra: 0,
     });
 
-    // Selección automática de año y mes actual
     const now = new Date();
     const [filtros, setFiltros] = useState({
         anio: now.getFullYear().toString(),
@@ -136,24 +158,39 @@ export default function PartidosStats() {
 
     // --- ORDENAMIENTO Y DATOS ORDENADOS ---
     const datosOrdenados = [...estadisticas].sort((a, b) => {
-        if (orden === "numero") {
-            const numA = parseInt(a.numero) || 999;
-            const numB = parseInt(b.numero) || 999;
-            return numA - numB;
+        let valA, valB;
+        if (sortBy === "numero") {
+            valA = parseInt(a.numero) || 999;
+            valB = parseInt(b.numero) || 999;
+        } else if (sortBy === "nombre") {
+            valA = (a.nombre || "").toLowerCase();
+            valB = (b.nombre || "").toLowerCase();
+        } else if (sortBy === "posiciones") {
+            // Ordenar por POSICION_ORDEN de la principal, o secundaria si no tiene principal
+            const pa = a.posicion && POSICION_ORDEN[a.posicion] !== undefined ? POSICION_ORDEN[a.posicion] : 999;
+            const sa = a.posicionSecundaria && POSICION_ORDEN[a.posicionSecundaria] !== undefined ? POSICION_ORDEN[a.posicionSecundaria] : 999;
+            const pb = b.posicion && POSICION_ORDEN[b.posicion] !== undefined ? POSICION_ORDEN[b.posicion] : 999;
+            const sb = b.posicionSecundaria && POSICION_ORDEN[b.posicionSecundaria] !== undefined ? POSICION_ORDEN[b.posicionSecundaria] : 999;
+            valA = Math.min(pa, sa);
+            valB = Math.min(pb, sb);
+        } else if (sortBy === "minutosTotales" || sortBy === "promedioMin" || sortBy === "goles" || sortBy === "partidosJugados" || sortBy === "porcentaje") {
+            valA = a[sortBy] ?? 0;
+            valB = b[sortBy] ?? 0;
+        } else {
+            valA = 0; valB = 0;
         }
-        if (orden === "minutosTotales") return b.minutosTotales - a.minutosTotales;
-        if (orden === "goles") return b.goles - a.goles;
-        if (orden === "porcentaje") return b.porcentaje - a.porcentaje;
-        return b.partidosJugados - a.partidosJugados;
+        if (valA < valB) return sortDir === "asc" ? -1 : 1;
+        if (valA > valB) return sortDir === "asc" ? 1 : -1;
+        return 0;
     });
 
     // --- DATOS PARA LOS GRÁFICOS ORDENADOS SEGÚN LA TABLA ---
     const datosGraficoMinutos = datosOrdenados.map(j => ({
-        nombre: j.nombre,
+        nombre: j.numero ? `#${j.numero} ${j.nombre}` : j.nombre,
         Minutos: j.minutosTotales
     }));
     const datosGraficoGoles = datosOrdenados.map(j => ({
-        nombre: j.nombre,
+        nombre: j.numero ? `#${j.numero} ${j.nombre}` : j.nombre,
         Goles: j.goles
     }));
 
@@ -162,6 +199,7 @@ export default function PartidosStats() {
         exportarEstadisticasAExcel({
             datosTabla: datosOrdenados.map(j => ({
                 Nombre: j.nombre,
+                "Nro": j.numero || "-",
                 Posición: j.posicion,
                 Minutos: j.minutosTotales,
                 Partidos: j.partidosJugados,
@@ -189,6 +227,28 @@ export default function PartidosStats() {
         }
         return null;
     }
+
+    // --- Renderiza la flecha SOLO si es la columna activa ---
+    const renderSortIcon = (colKey) => {
+        if (sortBy !== colKey) return null;
+        return (
+            <span style={{ fontSize: "1em", marginLeft: 4, color: "#1976d2" }}>
+                {sortDir === "asc" ? "▲" : "▼"}
+            </span>
+        );
+    };
+
+    // --- Para sincronizar el select con los headers ---
+    const handleSelectOrden = (e) => setSortBy(e.target.value);
+
+    useEffect(() => {
+        // Siempre que cambia sortBy desde el select, que sea asc por defecto (menos partidos/goles/minutos: desc)
+        if (["minutosTotales", "goles", "partidosJugados", "porcentaje", "promedioMin"].includes(sortBy)) {
+            setSortDir("desc");
+        } else {
+            setSortDir("asc");
+        }
+    }, [sortBy]);
 
     return (
         <div>
@@ -247,7 +307,7 @@ export default function PartidosStats() {
                 </Col>
             </Row>
 
-            {/* Gráficos (ahora usan datos ordenados igual que la tabla) */}
+            {/* Gráficos */}
             <Row className="mb-4">
                 <Col md={6}>
                     <div className="d-flex align-items-center justify-content-between">
@@ -301,22 +361,9 @@ export default function PartidosStats() {
                 </Col>
             </Row>
 
-            {/* Tabla ajustada y numerada */}
+            {/* Tabla ordenable */}
             <div className="d-flex justify-content-between align-items-center mb-2">
-                <div>
-                    <Form.Label className="mb-0">Ordenar por:</Form.Label>
-                    <Form.Select
-                        size="sm"
-                        style={{ width: 180, display: "inline-block", marginLeft: 8 }}
-                        value={orden}
-                        onChange={e => setOrden(e.target.value)}
-                    >
-                        <option value="numero">Número de camiseta</option>
-                        <option value="minutosTotales">Minutos jugados</option>
-                        <option value="goles">Goles convertidos</option>
-                        <option value="partidosJugados">Partidos jugados</option>
-                    </Form.Select>
-                </div>
+                <h5 className="mb-0 me-3">Listado de jugadores</h5>
                 <Button
                     size="sm"
                     variant="link"
@@ -332,29 +379,58 @@ export default function PartidosStats() {
             <Table striped bordered hover responsive size="sm" className="mt-3">
                 <thead>
                     <tr className="text-center">
-                        <th style={{ width: "5%" }} >#</th>
-                        <th style={{ width: "30%" }}>Jugador</th>
-                        <th style={{ width: "12%" }}>Posiciones</th>
-                        <th style={{ width: "11%" }}>Minutos</th>
-                        <th style={{ width: "9%" }}>Partidos</th>
-                        <th style={{ width: "12%" }}>Prom. min/partido</th>
-                        <th style={{ width: "8%" }}>Goles</th>
-                        <th style={{ width: "8%" }}>% Jugados</th>
+                        <th style={{ width: "5%" }}>#</th>
+                        {COLS.map(col => (
+                            <th
+                                key={col.key}
+                                style={{
+                                    width: col.width,
+                                    cursor: col.orderable ? "pointer" : "default",
+                                    userSelect: "none",
+                                    background: "var(--bs-body-bg)",
+                                    verticalAlign: "middle"
+                                }}
+                                className={
+                                    "align-middle " +
+                                    (
+                                        col.align === "center"
+                                            ? "text-center"
+                                            : col.align === "start"
+                                                ? "text-start"
+                                                : ""
+                                    ) +
+                                    " bg-body-tertiary"
+                                }
+                                onClick={() => {
+                                    if (!col.orderable) return;
+                                    if (sortBy === col.key) {
+                                        setSortDir(d => (d === "asc" ? "desc" : "asc"));
+                                    } else {
+                                        setSortBy(col.key);
+                                        setSortDir(col.key === "nombre" ? "asc" : "desc");
+                                    }
+                                }}
+                                role={col.orderable ? "button" : undefined}
+                                tabIndex={col.orderable ? 0 : undefined}
+                            >
+                                {col.label}
+                                {renderSortIcon(col.key)}
+                            </th>
+                        ))}
                     </tr>
                 </thead>
                 <tbody>
                     {datosOrdenados.map((j, i) => {
-                        const numero = j.numero ? `#${j.numero}` : "";
                         const pos1 = getPosicionData(j.posicion);
                         const pos2 = getPosicionData(j.posicionSecundaria);
                         return (
                             <tr key={j.id}>
                                 <td className="text-center">{i + 1}</td>
-                                <td>
-                                    <b>
-                                        {numero && <span className="me-1">{numero}</span>}
-                                        {j.nombre}
-                                    </b>
+                                <td className="text-start">
+                                    <b>{j.nombre}</b>
+                                </td>
+                                <td className="text-center">
+                                    {j.numero ? <b>#{j.numero}</b> : <span className="text-muted">–</span>}
                                 </td>
                                 <td className="text-center">
                                     {pos1 && (
@@ -371,7 +447,7 @@ export default function PartidosStats() {
                                         <Badge
                                             bg={pos2.color}
                                             title={pos2.label}
-                                            style={{ minWidth: 32 }}
+                                            style={{ minWidth: 32, marginLeft: 2 }}
                                         >
                                             {pos2.value}
                                         </Badge>
@@ -398,7 +474,7 @@ export default function PartidosStats() {
 
             <div className="mt-3 small text-secondary">
                 <span>
-                    <b>Tip:</b> Podés filtrar por mes y año, exportar la tabla (Excel) y descargar cada gráfico en PNG.
+                    <b>Tip:</b> Hacé clic en los encabezados para ordenar la tabla. Podés filtrar por mes y año, exportar la tabla (Excel) y descargar cada gráfico en PNG.
                 </span>
             </div>
         </div>

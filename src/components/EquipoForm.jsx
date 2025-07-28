@@ -50,7 +50,7 @@ export default function EquipoForm({
                     {modoEdicion ? "Editar equipo/categoría" : "Nuevo equipo/categoría"}
                 </legend>
                 <Form.Group>
-                    <Form.Label>Nombre del equipo/categoría</Form.Label>
+                    <Form.Label>Nombre</Form.Label>
                     <Form.Control
                         value={nombre}
                         onChange={handleChange}
