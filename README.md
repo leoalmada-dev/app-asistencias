@@ -104,3 +104,90 @@ Desarrollada como una **PWA** (Progressive Web App), permite registrar y analiza
 
 ## 🗂️ Estructura principal del proyecto
 
+```
+src/
+ ├── components/
+ │     ├── JugadorForm.jsx
+ │     ├── EntrenamientosStats.jsx
+ │     ├── PartidosStats.jsx
+ │     └── ...
+ ├── pages/
+ │     ├── Jugadores.jsx
+ │     ├── Estadisticas.jsx
+ │     └── ...
+ ├── data/
+ │     └── posiciones.js
+ ├── hooks/
+ │     └── useDB.js
+ ├── utils/
+ │     └── posiciones.js
+ │     ├── exportarEstadisticas.js
+ │     └── exportarGraficoComoPNG.js
+ ├── context/
+ │     ├── EquipoContext.js
+ │     └── ThemeContext.js
+ └── App.jsx
+```
+
+---
+
+## 🛠️ Instalación y ejecución local
+
+1. **Clonar el repositorio:**
+   ```sh
+   git clone https://github.com/leoalmada-dev/app-asistencias.git
+   cd app-asistencias
+   ```
+
+2. **Instalar dependencias:**
+   ```sh
+   npm install
+   ```
+
+3. **Iniciar la app en modo desarrollo:**
+   ```sh
+   npm run dev
+   ```
+   Accede a [http://localhost:5173](http://localhost:5173) (o el puerto que indique la consola).
+
+4. **Desplegar (build) para producción:**
+   ```sh
+   npm run build
+   ```
+   Los archivos finales estarán en `dist/` para subirlos a un servidor estático.
+
+---
+
+## 📱 Instalación como PWA
+
+- Desde el navegador (Chrome/Edge móvil o escritorio), abre la app y selecciona “Agregar a la pantalla de inicio”.
+- La app funcionará offline y se puede usar como una app nativa desde el celular o tablet.
+
+---
+
+## 📝 Changelog Beta 2.0
+
+-  Orden y visualización mejorada en listados de partidos, entrenamientos y campeonatos.
+- Nuevos iconos, badges y tooltips en toda la app.
+- Botón para agregar campeonatos directo desde el formulario de partidos.
+- Confirmaciones y alertas visuales para cada acción.
+- Resumen de asistencia y goles por partido.
+- Accesibilidad y diseño responsive mejorado.
+- Corrección de errores menores y limpieza de código.
+- Feedback automático en todas las operaciones (agregar, editar, eliminar).
+- Backups integrados y advertencias de borrado.
+- Mejor gestión de datos de inactivos.
+
+---
+
+## 👨‍💻 Créditos y agradecimientos
+- Desarrollado por: Leonardo Almada
+- Inspirado en necesidades reales de gestión de clubes infantiles.
+
+---
+
+## 📝 Licencia
+
+- Licencia MIT — uso libre con atribución.
+
+---
