@@ -168,7 +168,7 @@ export default function DetallePartido() {
       </Button>
 
       <h4 className="mb-3 d-flex align-items-center">
-        <FaFutbol className="me-2" size={22} />
+        <FaFutbol className="me-2" />
         Detalle de partido
       </h4>
 
@@ -239,12 +239,13 @@ export default function DetallePartido() {
               const estaInactivo = jugador && !jugador.activo;
               return (
                 <tr key={i} style={estaInactivo ? { color: "#888", background: "#f8f9fa", opacity: 0.7, fontStyle: "italic" } : {}}>
-                  <td className="text-center">{i + 1}</td>
+                  <td className="text-center align-middle">{i + 1}</td>
                   <td>
                     {editando ? (
                       <div className="d-flex align-items-center">
                         <Form.Select
                           value={p.jugadorId}
+                          className="form-select-sm"
                           onChange={e => handleParticipacion(i, "jugadorId", e.target.value)}
                           style={estaInactivo ? { color: "#aaa", fontStyle: "italic" } : {}}
                         >
@@ -295,6 +296,7 @@ export default function DetallePartido() {
                     {editando ? (
                       <Form.Control
                         type="number"
+                        className="form-select-sm"
                         min={0}
                         value={p.minutoEntrada}
                         onChange={e => handleParticipacion(i, "minutoEntrada", e.target.value)}
@@ -305,6 +307,7 @@ export default function DetallePartido() {
                     {editando ? (
                       <Form.Control
                         type="number"
+                        className="form-select-sm"
                         min={0}
                         value={p.minutoSalida}
                         onChange={e => handleParticipacion(i, "minutoSalida", e.target.value)}
@@ -315,6 +318,7 @@ export default function DetallePartido() {
                     {editando ? (
                       <Form.Control
                         type="number"
+                        className="form-select-sm"
                         min={0}
                         value={p.goles || 0}
                         onChange={e => handleParticipacion(i, "goles", parseInt(e.target.value) || 0)}
@@ -347,8 +351,7 @@ export default function DetallePartido() {
               placement="top"
               overlay={
                 <Tooltip>
-                  Solo pueden seleccionarse jugadores que participaron en este partido.<br />
-                  Los inactivos aparecen apagados y no pueden asignarse nuevos cambios.
+                  Solo pueden seleccionarse jugadores que participaron en este partido.
                 </Tooltip>
               }
             >
@@ -377,6 +380,7 @@ export default function DetallePartido() {
                   {editando ? (
                     <Form.Select
                       value={c.entra}
+                      className="form-select-sm"
                       onChange={e => handleCambio(i, "entra", e.target.value)}
                     >
                       <option value="">Seleccionar</option>
@@ -401,6 +405,7 @@ export default function DetallePartido() {
                   {editando ? (
                     <Form.Select
                       value={c.sale}
+                      className="form-select-sm"
                       onChange={e => handleCambio(i, "sale", e.target.value)}
                     >
                       <option value="">Seleccionar</option>
@@ -425,6 +430,7 @@ export default function DetallePartido() {
                   {editando ? (
                     <Form.Control
                       type="number"
+                      className="form-select-sm"
                       value={c.minuto}
                       min={0}
                       onChange={e => handleCambio(i, "minuto", e.target.value)}

@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { obtenerEntrenamientos, actualizarEntrenamiento, obtenerJugadores } from "../hooks/useDB";
 import { Table, Button, Form, Alert, Badge, OverlayTrigger, Tooltip } from "react-bootstrap";
+import {  FaInfoCircle } from "react-icons/fa";
+import { FaDumbbell } from "react-icons/fa6";
 
 export default function DetalleEntrenamiento() {
   const { id } = useParams();
@@ -60,7 +62,10 @@ export default function DetalleEntrenamiento() {
       <Button variant="outline-secondary" className="mb-3" onClick={() => navigate(-1)}>
         ← Volver
       </Button>
-      <h4 className="mb-3">Detalle de entrenamiento</h4>
+      <h3 className="mb-3 d-flex align-items-center">
+        <FaDumbbell className="me-2" />
+        Detalle de entrenamiento
+      </h3>
       <div className="mb-3">
         <b>Fecha:</b> {entrenamiento.fecha} <br />
         <b>Hora:</b> {entrenamiento.hora} <br />
@@ -69,7 +74,22 @@ export default function DetalleEntrenamiento() {
 
       <hr className="mb-4 mt-3" style={{ borderTop: "2px solid #888" }} />
 
-      <h5>Asistencias</h5>
+      <div className="d-flex align-items-center mb-2">
+        <h5 className="mb-0">
+          Asistencias{" "}
+          <OverlayTrigger
+            placement="top"
+            overlay={
+              <Tooltip>
+                Solo los jugadores activos pueden aparecer en nuevas asistencias.<br />
+                Los inactivos aparecen apagados y no pueden marcarse ni editarse.
+              </Tooltip>
+            }
+          >
+            <FaInfoCircle className="ms-1 text-secondary" style={{ fontSize: 16, cursor: "pointer" }} />
+          </OverlayTrigger>
+        </h5>
+      </div>
       <Table bordered hover size="sm" className="mb-4">
         <thead>
           <tr className="text-center">
@@ -165,8 +185,18 @@ export default function DetalleEntrenamiento() {
 
       <hr className="mb-4 mt-3" style={{ borderTop: "2px solid #888" }} />
 
+      <div className="d-flex align-items-center mb-2">
+        <h5 className="mb-0">
+          Notas del entrenador{" "}
+          <OverlayTrigger
+            placement="top"
+            overlay={<Tooltip>Agregá observaciones tácticas, incidencias, lesiones, etc.</Tooltip>}
+          >
+            <FaInfoCircle className="ms-1 text-secondary" style={{ fontSize: 16, cursor: "pointer" }} />
+          </OverlayTrigger>
+        </h5>
+      </div>
       <Form.Group className="mb-4">
-        <Form.Label>Notas del entrenador</Form.Label>
         {editando ? (
           <Form.Control
             as="textarea"
