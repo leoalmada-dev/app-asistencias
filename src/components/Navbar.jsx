@@ -75,7 +75,10 @@ export default function CustomNavbar() {
               <Form.Select
                 size="sm"
                 value={equipoSelectValue}
-                onChange={e => setEquipoId(Number(e.target.value))}
+                onChange={e => {
+                  setEquipoId(Number(e.target.value));
+                  setExpanded(false); // Cierra el menú hamburguesa si está abierto
+                }}
                 className="w-auto"
                 title="Seleccionar equipo"
               >
