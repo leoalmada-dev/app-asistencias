@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { Table, Button, Form, Alert } from "react-bootstrap";
-import { FaTimes } from "react-icons/fa";
+import { Table, Button, Form, Alert, Badge, OverlayTrigger, Tooltip } from "react-bootstrap";
+import { FaTimes, FaFutbol, FaEdit, FaInfoCircle } from "react-icons/fa";
 import {
   obtenerPartidos,
   actualizarPartido,
@@ -67,21 +67,28 @@ export default function DetallePartido() {
     const existentes = participaciones.map(p => p.jugadorId);
     const nuevos = jugadores
       .filter(j => !existentes.includes(j.id))
+      .sort((a, b) => (a.nombre || "").localeCompare(b.nombre || ""))
       .map(j => ({
         jugadorId: j.id,
         minutoEntrada: 0,
         minutoSalida: partido?.duracion || 70,
         goles: 0
       }));
-    setParticipaciones(prev => [...prev, ...nuevos]);
+    // Ordenar todas las participaciones por nombre
+    const todas = [
+      ...participaciones,
+      ...nuevos
+    ].map(p => ({
+      ...p,
+      jugador: jugadores.find(j => j.id === Number(p.jugadorId)) || {}
+    }))
+      .sort((a, b) => (a.jugador.nombre || "").localeCompare(b.jugador.nombre || ""))
+      .map(({ jugador, ...resto }) => resto);
+    setParticipaciones(todas);
   };
 
-  const jugadoresOrdenados = [...jugadores].sort((a, b) => {
-    const na = parseInt(a.numero) || 999;
-    const nb = parseInt(b.numero) || 999;
-    if (na !== nb) return na - nb;
-    return a.nombre.localeCompare(b.nombre);
-  });
+  // Ordena jugadores para selects
+  const jugadoresOrdenados = [...jugadores].sort((a, b) => (a.nombre || "").localeCompare(b.nombre || ""));
 
   const handleCambio = (index, campo, valor) => {
     setCambios(prev => {
@@ -106,6 +113,25 @@ export default function DetallePartido() {
     setCambios(prev => prev.filter((_, i) => i !== index));
   };
 
+  // Solo jugadores que participaron o están ya en el cambio (aunque hayan sido quitados luego)
+  const jugadoresParticipantes = participaciones
+    .filter(p => p.jugadorId)
+    .map(p => Number(p.jugadorId));
+  function opcionesCambio(actualId) {
+    // Devuelve [{id, label, inactivo}]
+    return jugadores
+      .filter(j =>
+        jugadoresParticipantes.includes(j.id) ||
+        actualId === String(j.id) // Asegura mostrar aunque ya no esté en participaciones (siendo editado)
+      )
+      .sort((a, b) => (a.nombre || "").localeCompare(b.nombre || ""))
+      .map(j => ({
+        id: j.id,
+        label: j.nombre + (j.numero ? ` - #${j.numero}` : ""),
+        inactivo: !j.activo
+      }));
+  }
+
   const handleSave = async () => {
     await actualizarPartido(partido.id, {
       ...partido,
@@ -125,6 +151,12 @@ export default function DetallePartido() {
     : 0;
   const goleadores = participaciones.filter(p => p.goles > 0);
 
+  // -- Nueva utilidad para marcar inactivos --
+  const esInactivo = (jugadorId) => {
+    const jug = jugadores.find(j => j.id === Number(jugadorId));
+    return jug && !jug.activo;
+  };
+
   return (
     <div className="container mt-4">
       <Button
@@ -135,7 +167,10 @@ export default function DetallePartido() {
         ← Volver
       </Button>
 
-      <h4 className="mb-3">Detalle de partido</h4>
+      <h4 className="mb-3 d-flex align-items-center">
+        <FaFutbol className="me-2" size={22} />
+        Detalle de partido
+      </h4>
 
       <div className="mb-3">
         <b>Fecha:</b> {partido.fecha} <br />
@@ -149,7 +184,22 @@ export default function DetallePartido() {
       <hr />
 
       <div className="mb-4">
-        <h5>Participaciones</h5>
+        <div className="d-flex align-items-center mb-2">
+          <h5 className="mb-0">
+            Participaciones{" "}
+            <OverlayTrigger
+              placement="top"
+              overlay={
+                <Tooltip>
+                  Solo los jugadores activos pueden seleccionarse.<br />
+                  Los inactivos aparecen apagados y no se pueden agregar a nuevos partidos.
+                </Tooltip>
+              }
+            >
+              <FaInfoCircle className="ms-1 text-secondary" style={{ fontSize: 16, cursor: "pointer" }} />
+            </OverlayTrigger>
+          </h5>
+        </div>
         {editando && (
           <div className="d-flex flex-wrap gap-2 mb-2">
             <Button
@@ -173,8 +223,8 @@ export default function DetallePartido() {
 
         <Table bordered hover size="sm">
           <thead>
-            <tr>
-              <th style={{ width: "5%" }} className="text-center">#</th>
+            <tr  className="text-center">
+              <th style={{ width: "5%" }}>#</th>
               <th style={{ width: "40%" }}>Jugador</th>
               <th style={{ width: "15%" }}>Entrada</th>
               <th style={{ width: "15%" }}>Salida</th>
@@ -185,35 +235,61 @@ export default function DetallePartido() {
           <tbody>
             {participaciones.map((p, i) => {
               const jugador = jugadores.find(j => j.id === Number(p.jugadorId));
-              const numero = jugador?.numero || 999;
-              const nombre = jugador ? `#${numero} - ${jugador.nombre}` : "Sin nombre";
-
+              const nombre = jugador ? `${jugador.nombre}${jugador.numero ? ` - #${jugador.numero}` : ""}` : "Sin nombre";
+              const estaInactivo = jugador && !jugador.activo;
               return (
-                <tr key={i}>
+                <tr key={i} style={estaInactivo ? { color: "#888", background: "#f8f9fa", opacity: 0.7, fontStyle: "italic" } : {}}>
                   <td className="text-center">{i + 1}</td>
                   <td>
                     {editando ? (
-                      <Form.Select
-                        value={p.jugadorId}
-                        onChange={e => handleParticipacion(i, "jugadorId", e.target.value)}
-                      >
-                        <option value="">Seleccionar</option>
-                        {jugadoresOrdenados.map(j => {
-                          const yaUsado = participaciones.some((x, idx) =>
-                            idx !== i && x.jugadorId === j.id
-                          );
-                          return (
-                            <option
-                              key={j.id}
-                              value={j.id}
-                              disabled={yaUsado}
-                            >
-                              {j.numero ? `#${j.numero} - ${j.nombre}` : j.nombre}
-                            </option>
-                          );
-                        })}
-                      </Form.Select>
-                    ) : nombre}
+                      <div className="d-flex align-items-center">
+                        <Form.Select
+                          value={p.jugadorId}
+                          onChange={e => handleParticipacion(i, "jugadorId", e.target.value)}
+                          style={estaInactivo ? { color: "#aaa", fontStyle: "italic" } : {}}
+                        >
+                          <option value="">Seleccionar</option>
+                          {jugadoresOrdenados
+                            .filter(j => j.activo || p.jugadorId === j.id) // Solo activos y el ya seleccionado
+                            .map(j => {
+                              const yaUsado = participaciones.some((x, idx) =>
+                                idx !== i && x.jugadorId === j.id
+                              );
+                              const label = j.nombre + (j.numero ? ` - #${j.numero}` : "");
+                              return (
+                                <option
+                                  key={j.id}
+                                  value={j.id}
+                                  disabled={yaUsado || (!j.activo && p.jugadorId !== j.id)}
+                                  style={!j.activo ? { color: "#aaa", fontStyle: "italic" } : {}}
+                                >
+                                  {label}{!j.activo ? " (inactivo)" : ""}
+                                </option>
+                              );
+                            })}
+                        </Form.Select>
+                        {estaInactivo && (
+                          <OverlayTrigger
+                            placement="top"
+                            overlay={<Tooltip>Jugador inactivo (no se puede asignar a nuevos partidos)</Tooltip>}
+                          >
+                            <Badge bg="secondary" className="ms-2">inactivo</Badge>
+                          </OverlayTrigger>
+                        )}
+                      </div>
+                    ) : (
+                      <span>
+                        {nombre}
+                        {estaInactivo && (
+                          <OverlayTrigger
+                            placement="top"
+                            overlay={<Tooltip>Jugador inactivo en este partido</Tooltip>}
+                          >
+                            <Badge bg="secondary" className="ms-2">inactivo</Badge>
+                          </OverlayTrigger>
+                        )}
+                      </span>
+                    )}
                   </td>
                   <td>
                     {editando ? (
@@ -264,7 +340,22 @@ export default function DetallePartido() {
       </div>
 
       <div className="mb-4">
-        <h5>Cambios</h5>
+        <div className="d-flex align-items-center mb-2">
+          <h5 className="mb-0">
+            Cambios{" "}
+            <OverlayTrigger
+              placement="top"
+              overlay={
+                <Tooltip>
+                  Solo pueden seleccionarse jugadores que participaron en este partido.<br />
+                  Los inactivos aparecen apagados y no pueden asignarse nuevos cambios.
+                </Tooltip>
+              }
+            >
+              <FaInfoCircle className="ms-1 text-secondary" style={{ fontSize: 16, cursor: "pointer" }} />
+            </OverlayTrigger>
+          </h5>
+        </div>
         {editando && (
           <Button variant="outline-success" size="sm" onClick={agregarCambio}>
             + Agregar cambio
@@ -289,13 +380,22 @@ export default function DetallePartido() {
                       onChange={e => handleCambio(i, "entra", e.target.value)}
                     >
                       <option value="">Seleccionar</option>
-                      {jugadoresOrdenados.map(j => (
-                        <option key={j.id} value={j.id}>
-                          {j.numero ? `#${j.numero} - ${j.nombre}` : j.nombre}
+                      {opcionesCambio(c.entra).map(j => (
+                        <option
+                          key={j.id}
+                          value={j.id}
+                          style={j.inactivo ? { color: "#aaa", fontStyle: "italic" } : {}}
+                        >
+                          {j.label}{j.inactivo ? " (inactivo)" : ""}
                         </option>
                       ))}
                     </Form.Select>
-                  ) : jugadores.find(j => j.id === Number(c.entra))?.nombre || "-"}
+                  ) : (
+                    (() => {
+                      const j = jugadores.find(jg => jg.id === Number(c.entra));
+                      return j ? `${j.nombre}${j.numero ? ` - #${j.numero}` : ""}` : "-";
+                    })()
+                  )}
                 </td>
                 <td>
                   {editando ? (
@@ -304,13 +404,22 @@ export default function DetallePartido() {
                       onChange={e => handleCambio(i, "sale", e.target.value)}
                     >
                       <option value="">Seleccionar</option>
-                      {jugadoresOrdenados.map(j => (
-                        <option key={j.id} value={j.id}>
-                          {j.numero ? `#${j.numero} - ${j.nombre}` : j.nombre}
+                      {opcionesCambio(c.sale).map(j => (
+                        <option
+                          key={j.id}
+                          value={j.id}
+                          style={j.inactivo ? { color: "#aaa", fontStyle: "italic" } : {}}
+                        >
+                          {j.label}{j.inactivo ? " (inactivo)" : ""}
                         </option>
                       ))}
                     </Form.Select>
-                  ) : jugadores.find(j => j.id === Number(c.sale))?.nombre || "-"}
+                  ) : (
+                    (() => {
+                      const j = jugadores.find(jg => jg.id === Number(c.sale));
+                      return j ? `${j.nombre}${j.numero ? ` - #${j.numero}` : ""}` : "-";
+                    })()
+                  )}
                 </td>
                 <td>
                   {editando ? (
@@ -343,18 +452,28 @@ export default function DetallePartido() {
 
       <div className="mb-4">
         <h5>Resumen del partido</h5>
-        <ul>
-          <li><b>Jugadores utilizados:</b> {totalParticipantes}</li>
-          <li><b>Total de cambios realizados:</b> {cambios.length}</li>
-          <li><b>Minutos promedio jugados:</b> {minutosPromedio} min</li>
+        <ul className="mb-2">
+          <li>
+            <b>Jugadores utilizados:</b> {totalParticipantes}
+          </li>
+          <li>
+            <b>Total de cambios realizados:</b> {cambios.length}
+          </li>
+          <li>
+            <b>Minutos promedio jugados:</b> {minutosPromedio} min
+          </li>
           {goleadores.length > 0 && (
-            <li><b>Goleadores:</b>
-              <ul>
-                {goleadores.map(g => (
-                  <li key={g.jugadorId}>
-                    {jugadores.find(j => j.id === Number(g.jugadorId))?.nombre || "Sin nombre"} — {g.goles}
-                  </li>
-                ))}
+            <li>
+              <b>Goleadores:</b>
+              <ul style={{ marginBottom: 0 }}>
+                {goleadores.map(g => {
+                  const j = jugadores.find(jg => jg.id === Number(g.jugadorId));
+                  return (
+                    <li key={g.jugadorId}>
+                      {j ? `${j.nombre}${j.numero ? ` - #${j.numero}` : ""}` : "Sin nombre"} — {g.goles}
+                    </li>
+                  );
+                })}
               </ul>
             </li>
           )}
@@ -364,7 +483,15 @@ export default function DetallePartido() {
       <hr />
 
       <div className="mb-4">
-        <h5>Notas del entrenador</h5>
+        <h5>
+          Notas del entrenador{" "}
+          <OverlayTrigger
+            placement="top"
+            overlay={<Tooltip>Agregá observaciones tácticas, incidencias, lesiones, etc.</Tooltip>}
+          >
+            <FaInfoCircle className="ms-1 text-secondary" style={{ fontSize: 16, cursor: "pointer" }} />
+          </OverlayTrigger>
+        </h5>
         <Form.Group>
           {editando ? (
             <Form.Control
@@ -385,11 +512,15 @@ export default function DetallePartido() {
       <div className="mb-4">
         {editando ? (
           <>
-            <Button variant="success" onClick={handleSave} className="me-2">Guardar</Button>
+            <Button variant="success" onClick={handleSave} className="me-2">
+              <FaEdit className="me-1" />Guardar
+            </Button>
             <Button variant="secondary" onClick={() => setEditando(false)}>Cancelar</Button>
           </>
         ) : (
-          <Button variant="warning" onClick={() => setEditando(true)}>Editar partido</Button>
+          <Button variant="warning" onClick={() => setEditando(true)}>
+            <FaEdit className="me-1" />Editar partido
+          </Button>
         )}
       </div>
     </div>

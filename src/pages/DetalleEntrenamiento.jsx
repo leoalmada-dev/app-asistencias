@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { obtenerEntrenamientos, actualizarEntrenamiento, obtenerJugadores } from "../hooks/useDB";
-import { Table, Button, Form, Alert } from "react-bootstrap";
+import { Table, Button, Form, Alert, Badge, OverlayTrigger, Tooltip } from "react-bootstrap";
 
 export default function DetalleEntrenamiento() {
   const { id } = useParams();
@@ -52,6 +52,9 @@ export default function DetalleEntrenamiento() {
     });
   };
 
+  // Devuelve el objeto jugador para el id
+  const getJugador = (jugadorId) => jugadores.find(j => j.id === jugadorId);
+
   return (
     <div className="container mt-4">
       <Button variant="outline-secondary" className="mb-3" onClick={() => navigate(-1)}>
@@ -69,69 +72,87 @@ export default function DetalleEntrenamiento() {
       <h5>Asistencias</h5>
       <Table bordered hover size="sm" className="mb-4">
         <thead>
-          <tr>
-            <th style={{ width: "5%" }} className="text-center">#</th>
+          <tr className="text-center">
+            <th style={{ width: "5%" }}>#</th>
             <th style={{ width: "55%" }}>Jugador</th>
-            <th style={{ width: "15%" }} className="text-center">Presente</th>
+            <th style={{ width: "15%" }}>Presente</th>
             <th style={{ width: "25%" }}>Motivo (si falta)</th>
           </tr>
         </thead>
         <tbody>
           {[...asistencias]
             .map((a) => {
-              const jugador = jugadores.find(j => j.id === a.jugadorId);
+              const jugador = getJugador(a.jugadorId);
               return {
                 ...a,
-                numero: jugador?.numero || 999,
+                inactivo: jugador && !jugador.activo,
                 nombreCompleto: jugador
-                  ? `#${jugador.numero || "--"} - ${jugador.nombre}`
+                  ? jugador.nombre
                   : a.nombre,
               };
             })
+            // Ordenar: activos primero, inactivos después, luego por nombre
             .sort((a, b) => {
-              if (a.numero !== b.numero) return a.numero - b.numero;
-              return a.nombreCompleto.localeCompare(b.nombreCompleto);
+              if (a.inactivo !== b.inactivo) return a.inactivo ? 1 : -1;
+              return (a.nombreCompleto || "").localeCompare(b.nombreCompleto || "");
             })
-            .map((a, i) => (
-              <tr key={a.jugadorId || i}>
-                <td className="text-center">{i + 1}</td>
-                <td>{a.nombreCompleto}</td>
-                <td className="text-center align-middle">
-                  {editando ? (
-                    <Form.Check
-                      checked={a.presente}
-                      className="m-0"
-                      style={{ verticalAlign: "middle" }}
-                      onChange={() => {
-                        const idx = asistencias.findIndex(as => as.jugadorId === a.jugadorId);
-                        if (idx !== -1) handleCheck(idx);
-                      }}
-                    />
-                  ) : (
-                    a.presente ? "✔️" : "❌"
-                  )}
-                </td>
-                <td style={{ minWidth: 180 }}>
-                  {editando ? (
-                    !a.presente ? (
-                      <Form.Control
-                        size="sm"
-                        value={a.motivo}
-                        onChange={e => {
+            .map((a, i) => {
+              const rowInactiva = a.inactivo ? { opacity: 0.56, background: "#f2f2f2" } : {};
+              return (
+                <tr key={a.jugadorId || i} style={rowInactiva}>
+                  <td className="text-center">{i + 1}</td>
+                  <td className="ps-2 align-middle">
+                    <span style={a.inactivo ? { color: "#888", fontStyle: "italic" } : {}}>
+                      {a.nombreCompleto}
+                    </span>
+                    {a.inactivo &&
+                      <OverlayTrigger
+                        placement="top"
+                        overlay={<Tooltip>Jugador inactivo (no aparece en nuevas asistencias)</Tooltip>}
+                      >
+                        <Badge bg="secondary" className="ms-2">inactivo</Badge>
+                      </OverlayTrigger>
+                    }
+                  </td>
+                  <td className="text-center align-middle">
+                    {editando ? (
+                      <Form.Check
+                        checked={a.presente}
+                        className="m-0"
+                        style={{ verticalAlign: "middle" }}
+                        onChange={() => {
                           const idx = asistencias.findIndex(as => as.jugadorId === a.jugadorId);
-                          if (idx !== -1) handleMotivo(idx, e.target.value);
+                          if (idx !== -1) handleCheck(idx);
                         }}
-                        placeholder="Motivo"
+                        disabled={a.inactivo}
                       />
                     ) : (
-                      <div style={{ height: "31px" }} /> // misma altura que un input sm
-                    )
-                  ) : (
-                    !a.presente ? a.motivo : ""
-                  )}
-                </td>
-              </tr>
-            ))}
+                      a.presente ? "✔️" : "❌"
+                    )}
+                  </td>
+                  <td style={{ minWidth: 180 }}>
+                    {editando ? (
+                      !a.presente ? (
+                        <Form.Control
+                          size="sm"
+                          value={a.motivo}
+                          onChange={e => {
+                            const idx = asistencias.findIndex(as => as.jugadorId === a.jugadorId);
+                            if (idx !== -1) handleMotivo(idx, e.target.value);
+                          }}
+                          placeholder="Motivo"
+                          disabled={a.inactivo}
+                        />
+                      ) : (
+                        <div style={{ height: "31px" }} />
+                      )
+                    ) : (
+                      !a.presente ? a.motivo : ""
+                    )}
+                  </td>
+                </tr>
+              );
+            })}
         </tbody>
         <tfoot>
           <tr>
