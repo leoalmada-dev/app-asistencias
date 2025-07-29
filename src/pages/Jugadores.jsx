@@ -292,10 +292,10 @@ export default function Jugadores() {
                                         <td className="text-center">{renderPosiciones(j.posicion, j.posicionSecundaria, isInactive)}</td>
                                         <td className="text-center">
                                             <Badge
-                                                bg={j.activo ? "success" : "danger"}
+                                                bg={j.activo ? "success" : "secondary"}
                                                 className={isInactive ? "opacity-50" : ""}
                                             >
-                                                {j.activo ? "Activo" : "No activo"}
+                                                {j.activo ? "Activo" : "inactivo"}
                                             </Badge>
                                         </td>
                                         <td className="text-center">

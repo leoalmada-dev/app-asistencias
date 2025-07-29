@@ -68,12 +68,13 @@ numerar las listas de jugadores
 achicar motivo de las faltas practicas estadisticas
 grafica partidos ajustar al "ordenar por"
 actualizar listados para ver jugadores sin numero
+estadisticas de partidos filtrados x campeonato
 
 
 jugadores activos estan filtrados?
+unificar "inactivo" gris
 implementacion de alertas de confirmacion (x ahora solo en jugadores)
 miunutos + descuentos
-estadisticas de partidos filtrados x campeonato
 calculo de cambios en baby, entrar nuevamente
 pensar bien la compatibilidad de asistencias para baby futbol o la mayor q son convocados
 

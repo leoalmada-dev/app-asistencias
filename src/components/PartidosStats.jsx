@@ -39,7 +39,7 @@ const COLS = [
 
 export default function PartidosStats() {
     const [estadisticas, setEstadisticas] = useState([]);
-    const [orden, setOrden] = useState("numero");
+    const [orden, setOrden] = useState("jugador");
     const [sortDir, setSortDir] = useState("asc");
     const { equipoId } = useEquipo();
 

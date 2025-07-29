@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Form, Button, Row, Col, Table } from "react-bootstrap";
+import { Form, Button, Row, Col, Table, Badge, Tooltip, OverlayTrigger } from "react-bootstrap";
 import { obtenerJugadores } from "../hooks/useDB";
 import { useEquipo } from "../context/EquipoContext";
 
@@ -22,9 +22,24 @@ export default function EntrenamientoForm({
 
     useEffect(() => {
         obtenerJugadores().then(js => {
-            setJugadores(js.filter(j => j.equipoId === equipoId));
+            // Jugadores activos del equipo actual
+            const activos = js.filter(j => j.equipoId === equipoId && j.activo);
+
+            // Si estamos editando, asegurate de incluir los jugadores de asistencias aunque ya no estén activos
+            if (modoEdicion && initialData?.asistencias) {
+                // Busca los jugadores por id que estén en asistencias pero no en activos
+                const idsEnAsistencias = initialData.asistencias.map(a => a.jugadorId);
+                const inactivosNecesarios = js.filter(
+                    j => j.equipoId === equipoId &&
+                        !j.activo &&
+                        idsEnAsistencias.includes(j.id)
+                );
+                setJugadores([...activos, ...inactivosNecesarios]);
+            } else {
+                setJugadores(activos);
+            }
         });
-    }, [equipoId]);
+    }, [equipoId, modoEdicion, initialData]);
 
     useEffect(() => {
         if (modoEdicion && initialData && initialData.asistencias) {
@@ -176,10 +191,10 @@ export default function EntrenamientoForm({
                 <h5>Asistencias ({form.asistencias.length})</h5>
                 <Table size="sm" bordered hover>
                     <thead>
-                        <tr>
-                            <th style={{ width: "5%" }} className="text-center">#</th>
+                        <tr className="text-center">
+                            <th style={{ width: "5%" }}>#</th>
                             <th style={{ width: "55%" }}>Jugador</th>
-                            <th style={{ width: "15%" }} className="text-center">Presente</th>
+                            <th style={{ width: "15%" }}>Presente</th>
                             <th style={{ width: "25%" }}>Motivo (si falta)</th>
                         </tr>
                     </thead>
@@ -189,24 +204,40 @@ export default function EntrenamientoForm({
                                 const jugador = jugadores.find(j => j.id === a.jugadorId);
                                 return {
                                     ...a,
-                                    numero: jugador?.numero || 999,
-                                    nombreCompleto: jugador?.numero
-                                        ? `#${jugador.numero} - ${a.nombre}`
-                                        : a.nombre
+                                    nombreCompleto: a.nombre,
+                                    activo: jugador?.activo !== false // true por defecto si no se encuentra (por si fue borrado)
                                 };
                             })
-                            .sort((a, b) => {
-                                const numA = parseInt(a.numero) || 999;
-                                const numB = parseInt(b.numero) || 999;
-                                if (numA !== numB) return numA - numB;
-                                return a.nombreCompleto.localeCompare(b.nombreCompleto);
-                            })
+                            .sort((a, b) => a.nombreCompleto.localeCompare(b.nombreCompleto))
                             .map((a, index) => {
                                 const i = form.asistencias.findIndex(as => as.jugadorId === a.jugadorId);
+                                const estiloNombre = !a.activo
+                                    ? { color: "#888", opacity: 0.7, fontStyle: "italic" }
+                                    : {};
                                 return (
                                     <tr key={a.jugadorId || index}>
                                         <td className="text-center align-middle">{index + 1}</td>
-                                        <td className="align-middle">{a.nombreCompleto}</td>
+                                        <td className="align-middle  ps-2" style={estiloNombre}>
+                                            {a.nombreCompleto}
+                                            {!a.activo && (
+                                                <OverlayTrigger
+                                                    placement="top"
+                                                    overlay={
+                                                        <Tooltip id={`tt-inactivo-${a.jugadorId}`}>
+                                                            Este jugador está marcado como <b>inactivo</b> y no se tiene en cuenta para estadísticas.
+                                                        </Tooltip>
+                                                    }
+                                                >
+                                                    <Badge
+                                                        bg="secondary"
+                                                        className="ms-2"
+                                                        style={{ fontSize: "0.85em", cursor: "pointer" }}
+                                                    >
+                                                        inactivo
+                                                    </Badge>
+                                                </OverlayTrigger>
+                                            )}
+                                        </td>
                                         <td className="text-center align-middle">
                                             <Form.Check
                                                 className="m-0"
@@ -248,6 +279,9 @@ export default function EntrenamientoForm({
                             Cancelar
                         </Button>
                     )}
+                </div>
+                <div className="text-secondary small mt-2">
+                    <b>Tip:</b> Podés marcar ausencias e indicar el motivo. Solo los jugadores activos se muestran en la lista de asistencia.
                 </div>
             </fieldset>
         </Form>

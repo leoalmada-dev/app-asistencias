@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import { Form, Button, Row, Col, Table } from "react-bootstrap";
-import { obtenerJugadores, obtenerCampeonatos } from "../hooks/useDB"; // 👈 nuevo import
+import { Form, Button, Row, Col, Table, Badge, OverlayTrigger, Tooltip } from "react-bootstrap";
+import { obtenerJugadores, obtenerCampeonatos } from "../hooks/useDB";
 import { useEquipo } from "../context/EquipoContext";
 import { FaTimes } from "react-icons/fa";
 
@@ -18,14 +18,17 @@ export default function PartidoForm({ onSave, initialData = {}, modoEdicion = fa
         cambios: [],
     });
 
-    const [jugadores, setJugadores] = useState([]);
+    const [jugadoresTodos, setJugadoresTodos] = useState([]);
+    const [jugadoresActivos, setJugadoresActivos] = useState([]);
     const [campeonatos, setCampeonatos] = useState([]);
     const { equipoId } = useEquipo();
 
     useEffect(() => {
         if (equipoId) {
             obtenerJugadores().then(js => {
-                setJugadores(js.filter(j => j.equipoId === equipoId));
+                const delEquipo = js.filter(j => j.equipoId === equipoId);
+                setJugadoresTodos(delEquipo);
+                setJugadoresActivos(delEquipo.filter(j => j.activo));
             });
             obtenerCampeonatos(equipoId).then(cs => {
                 setCampeonatos(cs.filter(c => c.activo));
@@ -93,6 +96,7 @@ export default function PartidoForm({ onSave, initialData = {}, modoEdicion = fa
         setForm({ ...form, participaciones: nuevas });
     };
 
+    // Agrega una fila vacía, sólo si hay lugar y entre los jugadores activos
     const agregarParticipante = () => {
         setForm(f => ({
             ...f,
@@ -108,16 +112,12 @@ export default function PartidoForm({ onSave, initialData = {}, modoEdicion = fa
         }));
     };
 
+    // Agrega todos los jugadores activos que faltan, ordenados por nombre
     const agregarTodosLosJugadores = () => {
         const existentes = form.participaciones.map(p => p.jugadorId);
-        const nuevos = jugadores
+        const nuevos = jugadoresActivos
             .filter(j => !existentes.includes(j.id))
-            .sort((a, b) => {
-                const numA = parseInt(a.numero) || 999;
-                const numB = parseInt(b.numero) || 999;
-                if (numA !== numB) return numA - numB;
-                return a.nombre.localeCompare(b.nombre);
-            })
+            .sort((a, b) => (a.nombre || "").localeCompare(b.nombre || ""))
             .map(j => ({
                 jugadorId: j.id,
                 minutoEntrada: 0,
@@ -125,24 +125,23 @@ export default function PartidoForm({ onSave, initialData = {}, modoEdicion = fa
                 goles: 0
             }));
 
-        const combinados = [...form.participaciones, ...nuevos];
+        const todos = [
+            ...form.participaciones,
+            ...nuevos
+        ];
 
-        const combinadosOrdenados = combinados
+        // Ordenar todas las participaciones por nombre del jugador (puede haber inactivos)
+        const todosOrdenados = todos
             .map(p => ({
                 ...p,
-                jugador: jugadores.find(j => j.id === p.jugadorId) || {}
+                jugador: jugadoresTodos.find(j => j.id === p.jugadorId) || {}
             }))
-            .sort((a, b) => {
-                const numA = parseInt(a.jugador.numero) || 999;
-                const numB = parseInt(b.jugador.numero) || 999;
-                if (numA !== numB) return numA - numB;
-                return (a.jugador.nombre || "").localeCompare(b.jugador.nombre || "");
-            })
+            .sort((a, b) => (a.jugador.nombre || "").localeCompare(b.jugador.nombre || ""))
             .map(({ jugador, ...resto }) => resto);
 
         setForm(f => ({
             ...f,
-            participaciones: combinadosOrdenados
+            participaciones: todosOrdenados
         }));
     };
 
@@ -154,7 +153,6 @@ export default function PartidoForm({ onSave, initialData = {}, modoEdicion = fa
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        // Si es amistoso, siempre guardar "Amistoso" como torneo
         const envio = { ...form, torneo: form.tipo === "amistoso" ? "Amistoso" : form.torneo };
         onSave(envio);
 
@@ -179,6 +177,12 @@ export default function PartidoForm({ onSave, initialData = {}, modoEdicion = fa
                 cambios: [],
             });
         }
+    };
+
+    // Utilidad para ver si el jugador es inactivo
+    const isInactivo = (jugadorId) => {
+        const jug = jugadoresTodos.find(j => j.id === jugadorId);
+        return jug && !jug.activo;
     };
 
     return (
@@ -283,14 +287,14 @@ export default function PartidoForm({ onSave, initialData = {}, modoEdicion = fa
                 </Row>
 
                 <div className="mb-2 mt-3">
-                    <h5>Participaciones ({form.participaciones.length}/{jugadores.length})</h5>
+                    <h5>Participaciones ({form.participaciones.length}/{jugadoresActivos.length})</h5>
                     <div className="d-flex flex-wrap gap-2">
                         <Button
                             size="sm"
                             variant="outline-success"
                             type="button"
                             onClick={agregarParticipante}
-                            disabled={form.participaciones.length >= jugadores.length}
+                            disabled={form.participaciones.length >= jugadoresActivos.length}
                         >
                             + Jugador
                         </Button>
@@ -299,7 +303,7 @@ export default function PartidoForm({ onSave, initialData = {}, modoEdicion = fa
                             variant="outline-primary"
                             type="button"
                             onClick={agregarTodosLosJugadores}
-                            disabled={form.participaciones.length >= jugadores.length}
+                            disabled={form.participaciones.length >= jugadoresActivos.length}
                         >
                             + Completar Jugadores
                         </Button>
@@ -318,79 +322,96 @@ export default function PartidoForm({ onSave, initialData = {}, modoEdicion = fa
                         </tr>
                     </thead>
                     <tbody>
-                        {form.participaciones.map((p, i) => (
-                            <tr key={i}>
-                                <td className="text-center align-middle">{i + 1}</td>
-                                <td>
-                                    <Form.Select
-                                        value={p.jugadorId}
-                                        onChange={(e) => handleParticipacionChange(i, 'jugadorId', e.target.value)}
-                                    >
-                                        <option value="">Seleccionar</option>
-                                        {jugadores
-                                            .sort((a, b) => {
-                                                const numA = parseInt(a.numero) || 999;
-                                                const numB = parseInt(b.numero) || 999;
-                                                if (numA !== numB) return numA - numB;
-                                                return a.nombre.localeCompare(b.nombre);
-                                            })
-                                            .map(j => {
-                                                const yaUsado = form.participaciones.some(
-                                                    (otro, idx) => idx !== i && otro.jugadorId === j.id
-                                                );
-                                                const label = j.numero ? `#${j.numero} - ${j.nombre}` : j.nombre;
-                                                return (
-                                                    <option
-                                                        key={j.id}
-                                                        value={j.id}
-                                                        disabled={yaUsado}
-                                                        title={label}
-                                                    >
-                                                        {label}
-                                                    </option>
-                                                );
-                                            })}
-                                    </Form.Select>
-                                </td>
-                                <td>
-                                    <Form.Control
-                                        type="number"
-                                        value={p.minutoEntrada}
-                                        onChange={(e) => handleParticipacionChange(i, 'minutoEntrada', e.target.value)}
-                                        style={{ width: "100%" }}
-                                    />
-                                </td>
-                                <td>
-                                    <Form.Control
-                                        type="number"
-                                        value={p.minutoSalida}
-                                        onChange={(e) => handleParticipacionChange(i, 'minutoSalida', e.target.value)}
-                                        style={{ width: "100%" }}
-                                    />
-                                </td>
-                                <td>
-                                    <Form.Control
-                                        type="number"
-                                        min={0}
-                                        value={p.goles || 0}
-                                        onChange={e => handleParticipacionChange(i, 'goles', parseInt(e.target.value) || 0)}
-                                        style={{ width: "100%" }}
-                                    />
-                                </td>
-                                <td className="text-center align-middle p-0">
-                                    <Button
-                                        variant="link"
-                                        size="sm"
-                                        type="button"
-                                        className="text-danger py-1"
-                                        onClick={() => eliminarParticipante(i)}
-                                        title="Quitar jugador"
-                                    >
-                                        <FaTimes />
-                                    </Button>
-                                </td>
-                            </tr>
-                        ))}
+                        {form.participaciones.map((p, i) => {
+                            const jugador = jugadoresTodos.find(j => j.id === p.jugadorId);
+                            const estaInactivo = jugador && !jugador.activo;
+                            return (
+                                <tr key={i}>
+                                    <td className="text-center align-middle">{i + 1}</td>
+                                    <td>
+                                        <div className="d-flex align-items-center">
+                                            <Form.Select
+                                                value={p.jugadorId}
+                                                onChange={(e) => handleParticipacionChange(i, 'jugadorId', e.target.value)}
+                                                style={estaInactivo ? { color: "#aaa", fontStyle: "italic" } : {}}
+                                            >
+                                                <option value="">Seleccionar</option>
+                                                {/* Activos primero, inactivos sólo si están usados */}
+                                                {[
+                                                    ...jugadoresActivos,
+                                                    ...jugadoresTodos.filter(j => !j.activo && form.participaciones.some(pp => pp.jugadorId === j.id))
+                                                ]
+                                                    .sort((a, b) => (a.nombre || "").localeCompare(b.nombre || ""))
+                                                    .map(j => {
+                                                        const yaUsado = form.participaciones.some(
+                                                            (otro, idx) => idx !== i && otro.jugadorId === j.id
+                                                        );
+                                                        const inactivo = !j.activo;
+                                                        // Mostrar nombre primero y número después
+                                                        const label = j.nombre + (j.numero ? ` - #${j.numero}` : "");
+                                                        return (
+                                                            <option
+                                                                key={j.id}
+                                                                value={j.id}
+                                                                disabled={yaUsado || (!j.activo && !form.participaciones.some(pp => pp.jugadorId === j.id))}
+                                                                style={inactivo ? { color: "#aaa", fontStyle: "italic" } : {}}
+                                                                title={label + (inactivo ? " (inactivo)" : "")}
+                                                            >
+                                                                {label} {inactivo ? "(inactivo)" : ""}
+                                                            </option>
+                                                        );
+                                                    })}
+                                            </Form.Select>
+                                            {estaInactivo &&
+                                                <OverlayTrigger
+                                                    placement="top"
+                                                    overlay={<Tooltip>Jugador inactivo (no se puede asignar a nuevos partidos)</Tooltip>}
+                                                >
+                                                    <Badge bg="secondary" className="ms-2">inactivo</Badge>
+                                                </OverlayTrigger>
+                                            }
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <Form.Control
+                                            type="number"
+                                            value={p.minutoEntrada}
+                                            onChange={(e) => handleParticipacionChange(i, 'minutoEntrada', e.target.value)}
+                                            style={{ width: "100%" }}
+                                        />
+                                    </td>
+                                    <td>
+                                        <Form.Control
+                                            type="number"
+                                            value={p.minutoSalida}
+                                            onChange={(e) => handleParticipacionChange(i, 'minutoSalida', e.target.value)}
+                                            style={{ width: "100%" }}
+                                        />
+                                    </td>
+                                    <td>
+                                        <Form.Control
+                                            type="number"
+                                            min={0}
+                                            value={p.goles || 0}
+                                            onChange={e => handleParticipacionChange(i, 'goles', parseInt(e.target.value) || 0)}
+                                            style={{ width: "100%" }}
+                                        />
+                                    </td>
+                                    <td className="text-center align-middle p-0">
+                                        <Button
+                                            variant="link"
+                                            size="sm"
+                                            type="button"
+                                            className="text-danger py-1"
+                                            onClick={() => eliminarParticipante(i)}
+                                            title="Quitar jugador"
+                                        >
+                                            <FaTimes />
+                                        </Button>
+                                    </td>
+                                </tr>
+                            );
+                        })}
                     </tbody>
                 </Table>
 
@@ -403,6 +424,11 @@ export default function PartidoForm({ onSave, initialData = {}, modoEdicion = fa
                             Cancelar
                         </Button>
                     )}
+                </div>
+                <div className="mt-3 small text-secondary">
+                    <span>
+                        <b>Tip:</b> Cargá todos los jugadores antes de registrar partidos para poder asignar participaciones y cambios correctamente.
+                    </span>
                 </div>
             </fieldset>
         </Form>

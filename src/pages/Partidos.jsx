@@ -102,11 +102,6 @@ export default function Partidos() {
                         onCancel={handleCancelarEdicion}
                     />
                 )}
-                <div className="mt-3 small text-secondary">
-                    <span>
-                        <b>Tip:</b> Cargá todos los jugadores antes de registrar partidos para poder asignar participaciones y cambios correctamente.
-                    </span>
-                </div>
             </div>
 
             <hr className="my-4" style={{ borderTop: "2px solid #888" }} />
