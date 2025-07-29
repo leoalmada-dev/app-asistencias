@@ -14,6 +14,7 @@ import AppWrapper from './AppWrapper';
 import Configuracion from './pages/Configuracion';
 import DetalleEntrenamiento from './pages/DetalleEntrenamiento';
 import DetallePartido from './pages/DetallePartido';
+import Campeonatos from './pages/Campeonatos';
 
 export default function App() {
   useEffect(() => {
@@ -39,6 +40,7 @@ export default function App() {
                 <Route path="/partidos" element={<Partidos />} />
                 <Route path="/estadisticas" element={<Estadisticas />} />
                 <Route path="/equipos" element={<Equipos />} />
+                <Route path="/campeonatos" element={<Campeonatos />} />
                 <Route path="/configuracion" element={<Configuracion />} />
                 <Route path="/partidos/:id" element={<DetallePartido />} />
               </Routes>
