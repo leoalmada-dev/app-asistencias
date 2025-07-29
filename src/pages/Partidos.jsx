@@ -8,11 +8,44 @@ import {
 } from "../hooks/useDB";
 import PartidoForm from "../components/PartidoForm";
 import ModalConfirmarEliminacion from "../components/ModalConfirmarEliminacion";
-import { Table, Button, Alert } from "react-bootstrap";
-import { FaEdit, FaTrash, FaEye } from "react-icons/fa";
+import { Table, Button, Alert, Badge, OverlayTrigger, Tooltip } from "react-bootstrap";
+import { FaEdit, FaTrash, FaEye, FaSortUp, FaSortDown, FaFutbol, FaInfoCircle } from "react-icons/fa";
 import { useEquipo } from "../context/EquipoContext";
 import { Link } from "react-router-dom";
-import { FaFutbol } from "react-icons/fa";
+import AlertaFlotante from "../components/AlertaFlotante";
+
+// Paleta de colores personalizada para torneos
+const TOURNAMENT_COLORS = [
+    "primary",  // Azul
+    "success",  // Verde
+    "warning",  // Amarillo
+    "dark",     // Gris oscuro
+    "danger",   // Rojo
+];
+
+function colorDeTorneo(nombre) {
+    if (!nombre || nombre.toLowerCase() === "amistoso") return "secondary";
+    let hash = 0;
+    for (let i = 0; i < nombre.length; i++) hash = nombre.charCodeAt(i) + ((hash << 5) - hash);
+    const colores = TOURNAMENT_COLORS.filter(c => c !== "secondary");
+    return colores[Math.abs(hash) % colores.length];
+}
+
+const COLS = [
+    { key: "index", label: "#", width: "5%", orderable: false },
+    { key: "fecha", label: "Fecha", width: "15%", orderable: true },
+    { key: "torneo", label: "Torneo", width: "25%", orderable: true },
+    { key: "rival", label: "Rival", width: "26%", orderable: true },
+    { key: "resultado", label: "Resultado", width: "15%", orderable: false },
+    { key: "acciones", label: "Acciones", width: "15%", orderable: false },
+];
+
+function renderSortIcon(sortBy, sortDir, colKey) {
+    if (sortBy !== colKey) return null;
+    return sortDir === "asc"
+        ? <FaSortUp className="ms-1 text-primary" style={{ position: "relative", top: -2 }} />
+        : <FaSortDown className="ms-1 text-primary" style={{ position: "relative", top: 2 }} />;
+}
 
 export default function Partidos() {
     const [partidos, setPartidos] = useState([]);
@@ -21,6 +54,9 @@ export default function Partidos() {
     const [showModal, setShowModal] = useState(false);
     const [partidoAEliminar, setPartidoAEliminar] = useState(null);
     const [loadingEliminar, setLoadingEliminar] = useState(false);
+    const [sortBy, setSortBy] = useState("fecha");
+    const [sortDir, setSortDir] = useState("desc");
+    const [alerta, setAlerta] = useState({ show: false, mensaje: "", tipo: "success" }); // << NUEVO
 
     const { equipoId } = useEquipo();
     const formRef = useRef();
@@ -40,8 +76,18 @@ export default function Partidos() {
         if (editando) {
             await actualizarPartido(editando.id, { ...partido, equipoId });
             setEditando(null);
+            setAlerta({
+                show: true,
+                mensaje: "¡Partido actualizado correctamente!",
+                tipo: "success"
+            });
         } else {
             await agregarPartido({ ...partido, equipoId });
+            setAlerta({
+                show: true,
+                mensaje: "¡Partido registrado correctamente!",
+                tipo: "success"
+            });
         }
         cargar();
     };
@@ -50,19 +96,22 @@ export default function Partidos() {
         setEditando(null);
     };
 
-    // Nuevo: abrir el modal con el partido a eliminar
     const handleEliminar = (partido) => {
         setPartidoAEliminar(partido);
         setShowModal(true);
     };
 
-    // Confirmar eliminación después del modal
     const confirmarEliminar = async () => {
         setLoadingEliminar(true);
         await eliminarPartido(partidoAEliminar.id);
         setLoadingEliminar(false);
         setShowModal(false);
         setPartidoAEliminar(null);
+        setAlerta({
+            show: true,
+            mensaje: "Partido eliminado correctamente.",
+            tipo: "success"
+        });
         cargar();
     };
 
@@ -72,6 +121,26 @@ export default function Partidos() {
             formRef.current?.scrollIntoView({ behavior: "smooth" });
         }, 100);
     };
+
+    const partidosOrdenados = [...partidos].sort((a, b) => {
+        let valA, valB;
+        if (sortBy === "fecha") {
+            valA = (a.fecha || "");
+            valB = (b.fecha || "");
+        } else if (sortBy === "torneo") {
+            valA = (a.torneo || "").toLowerCase();
+            valB = (b.torneo || "").toLowerCase();
+        } else if (sortBy === "rival") {
+            valA = (a.rival || "").toLowerCase();
+            valB = (b.rival || "").toLowerCase();
+        } else {
+            valA = (a.fecha || "");
+            valB = (b.fecha || "");
+        }
+        if (valA < valB) return sortDir === "asc" ? -1 : 1;
+        if (valA > valB) return sortDir === "asc" ? 1 : -1;
+        return 0;
+    });
 
     if (!equipoId) return <Alert variant="warning">Debes seleccionar un equipo para usar esta sección.</Alert>;
     const sinJugadores = jugadores.length === 0;
@@ -107,51 +176,123 @@ export default function Partidos() {
             <hr className="my-4" style={{ borderTop: "2px solid #888" }} />
 
             <div>
-                <h5 className="mb-3">Lista de partidos registrados</h5>
-                <Table striped bordered hover responsive>
+                <div className="d-flex align-items-center mb-2">
+                    <h5 className="mb-0 me-2">Lista de partidos registrados</h5>
+                    <OverlayTrigger
+                        placement="top"
+                        overlay={
+                            <Tooltip>
+                                Hacé clic en los títulos de las columnas para ordenar la tabla.<br />
+                                El torneo puede ser un campeonato o simplemente “Amistoso”.<br />
+                                El color del torneo ayuda a distinguir rápidamente.<br />
+                                Usá los íconos para ver detalle, editar o eliminar cada partido.
+                            </Tooltip>
+                        }
+                    >
+                        <FaInfoCircle className="text-secondary" style={{ cursor: "pointer" }} />
+                    </OverlayTrigger>
+                </div>
+                <Table striped bordered hover responsive size="sm" className="mb-4">
                     <thead>
                         <tr>
-                            <th>Fecha</th>
-                            <th>Tipo</th>
-                            <th>Rival</th>
-                            <th>Duración (min)</th>
-                            <th>Resultado</th>
-                            <th>Acciones</th>
+                            {COLS.map(col => (
+                                <th
+                                    key={col.key}
+                                    style={{
+                                        width: col.width,
+                                        cursor: col.orderable ? "pointer" : "default",
+                                        userSelect: "none",
+                                        verticalAlign: "middle",
+                                        textAlign: "center"
+                                    }}
+                                    className="align-middle bg-body-tertiary text-center"
+                                    onClick={() => {
+                                        if (!col.orderable) return;
+                                        if (sortBy === col.key) {
+                                            setSortDir(d => (d === "asc" ? "desc" : "asc"));
+                                        } else {
+                                            setSortBy(col.key);
+                                            setSortDir("asc");
+                                        }
+                                    }}
+                                    tabIndex={col.orderable ? 0 : undefined}
+                                >
+                                    {col.label}
+                                    {col.orderable && renderSortIcon(sortBy, sortDir, col.key)}
+                                </th>
+                            ))}
                         </tr>
                     </thead>
                     <tbody>
-                        {partidos.length === 0 ? (
+                        {partidosOrdenados.length === 0 ? (
                             <tr>
-                                <td colSpan={6} className="text-center text-muted">
+                                <td colSpan={COLS.length} className="text-center text-muted">
                                     No hay partidos registrados para este equipo.
                                 </td>
                             </tr>
                         ) : (
-                            partidos.map((p) => (
+                            partidosOrdenados.map((p, idx) => (
                                 <tr key={p.id}>
-                                    <td>{p.fecha}</td>
-                                    <td>{p.tipo}</td>
-                                    <td>{p.rival}</td>
-                                    <td>{p.duracion || "-"}</td>
-                                    <td>{p.golesFavor} - {p.golesContra}</td>
-                                    <td>
-                                        <Button as={Link} to={`/partidos/${p.id}`} variant="outline-info" size="sm"
-                                            title="Ver detalle"
-                                            className="me-2">
-                                            <FaEye />
-                                        </Button>
-                                        <Button variant="outline-warning"
-                                            className="me-2"
-                                            size="sm" onClick={() => handleEditar(p)}>
-                                            <FaEdit />
-                                        </Button>
-                                        <Button
-                                            variant="outline-danger"
-                                            size="sm"
-                                            onClick={() => handleEliminar(p)}
-                                        >
-                                            <FaTrash />
-                                        </Button>
+                                    <td className="text-center align-middle">{idx + 1}</td>
+                                    <td className="text-center align-middle">{p.fecha}</td>
+                                    <td className="text-center align-middle">
+                                        <Badge bg={colorDeTorneo(p.torneo)} style={{ fontSize: 13, minWidth: 70 }}>
+                                            {p.torneo}
+                                        </Badge>
+                                    </td>
+                                    <td className="text-center align-middle">{p.rival}</td>
+                                    <td className="text-center align-middle">
+                                        <Badge bg={
+                                            p.golesFavor > p.golesContra
+                                                ? "success"
+                                                : p.golesFavor < p.golesContra
+                                                    ? "danger"
+                                                    : "secondary"
+                                        } style={{ fontSize: 13 }}>
+                                            {p.golesFavor} - {p.golesContra}
+                                        </Badge>
+                                    </td>
+                                    <td className="text-center align-middle">
+                                        <OverlayTrigger placement="top" overlay={<Tooltip>Ver detalle</Tooltip>}>
+                                            <span>
+                                                <Button
+                                                    as={Link}
+                                                    to={`/partidos/${p.id}`}
+                                                    variant="link"
+                                                    size="sm"
+                                                    className="p-0 me-2 text-info"
+                                                    style={{ fontSize: 18 }}
+                                                >
+                                                    <FaEye />
+                                                </Button>
+                                            </span>
+                                        </OverlayTrigger>
+                                        <OverlayTrigger placement="top" overlay={<Tooltip>Editar</Tooltip>}>
+                                            <span>
+                                                <Button
+                                                    variant="link"
+                                                    className="p-0 me-2 text-warning"
+                                                    size="sm"
+                                                    style={{ fontSize: 18 }}
+                                                    onClick={() => handleEditar(p)}
+                                                >
+                                                    <FaEdit />
+                                                </Button>
+                                            </span>
+                                        </OverlayTrigger>
+                                        <OverlayTrigger placement="top" overlay={<Tooltip>Eliminar</Tooltip>}>
+                                            <span>
+                                                <Button
+                                                    variant="link"
+                                                    className="p-0 text-danger"
+                                                    size="sm"
+                                                    style={{ fontSize: 18 }}
+                                                    onClick={() => handleEliminar(p)}
+                                                >
+                                                    <FaTrash />
+                                                </Button>
+                                            </span>
+                                        </OverlayTrigger>
                                     </td>
                                 </tr>
                             ))
@@ -168,6 +309,15 @@ export default function Partidos() {
                 nombre={partidoAEliminar?.rival || partidoAEliminar?.fecha}
                 tipo="partido"
                 loading={loadingEliminar}
+            />
+
+            {/* Alerta flotante de acciones */}
+            <AlertaFlotante
+                show={alerta.show}
+                mensaje={alerta.mensaje}
+                tipo={alerta.tipo}
+                ms={2400}
+                onClose={() => setAlerta(a => ({ ...a, show: false }))}
             />
         </div>
     );

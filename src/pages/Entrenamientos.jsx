@@ -6,18 +6,40 @@ import {
     eliminarEntrenamiento,
 } from "../hooks/useDB";
 import EntrenamientoForm from "../components/EntrenamientoForm";
-import { Table, Button, Alert } from "react-bootstrap";
-import { FaEdit, FaTrash, FaEye } from "react-icons/fa";
+import { Table, Button, Alert, OverlayTrigger, Tooltip } from "react-bootstrap";
+import { FaEdit, FaTrash, FaEye, FaSortUp, FaSortDown, FaInfoCircle } from "react-icons/fa";
 import { useEquipo } from "../context/EquipoContext";
 import { Link } from "react-router-dom";
 import { FaDumbbell } from "react-icons/fa6";
+import AlertaFlotante from "../components/AlertaFlotante";
+
+const COLS = [
+    { key: "index", label: "#", width: "5%", orderable: false },
+    { key: "fecha", label: "Fecha", width: "15%", orderable: true },
+    { key: "hora", label: "Hora", width: "12%", orderable: true },
+    { key: "lugar", label: "Lugar", width: "28%", orderable: true },
+    { key: "duracion", label: "Duración", width: "12%", orderable: true },
+    { key: "asistencias", label: "Asistieron", width: "13%", orderable: true },
+    { key: "acciones", label: "Acciones", width: "15%", orderable: false },
+];
+
+function renderSortIcon(sortBy, sortDir, colKey) {
+    if (sortBy !== colKey) return null;
+    return sortDir === "asc"
+        ? <FaSortUp className="ms-1 text-primary" style={{ position: "relative", top: -2 }} />
+        : <FaSortDown className="ms-1 text-primary" style={{ position: "relative", top: 2 }} />;
+}
 
 export default function Entrenamientos() {
     const [entrenamientos, setEntrenamientos] = useState([]);
     const [editando, setEditando] = useState(null);
+    const [sortBy, setSortBy] = useState("fecha");
+    const [sortDir, setSortDir] = useState("desc");
     const { equipoId } = useEquipo();
+    const formRef = useRef();
 
-    const formRef = useRef(); // Referencia para scroll al formulario
+    // NUEVO: estado para las alertas flotantes
+    const [alerta, setAlerta] = useState({ show: false, mensaje: "", tipo: "success" });
 
     const cargar = async () => {
         const lista = await obtenerEntrenamientos();
@@ -32,8 +54,18 @@ export default function Entrenamientos() {
         if (editando) {
             await actualizarEntrenamiento(editando.id, { ...entrenamiento, equipoId });
             setEditando(null);
+            setAlerta({
+                show: true,
+                mensaje: "¡Entrenamiento actualizado correctamente!",
+                tipo: "success"
+            });
         } else {
             await agregarEntrenamiento({ ...entrenamiento, equipoId });
+            setAlerta({
+                show: true,
+                mensaje: "¡Entrenamiento registrado correctamente!",
+                tipo: "success"
+            });
         }
         cargar();
     };
@@ -43,6 +75,11 @@ export default function Entrenamientos() {
     const handleEliminar = async (id) => {
         if (window.confirm("¿Eliminar este entrenamiento?")) {
             await eliminarEntrenamiento(id);
+            setAlerta({
+                show: true,
+                mensaje: "Entrenamiento eliminado correctamente.",
+                tipo: "success"
+            });
             cargar();
         }
     };
@@ -51,8 +88,34 @@ export default function Entrenamientos() {
         setEditando(entrenamiento);
         setTimeout(() => {
             formRef.current?.scrollIntoView({ behavior: "smooth" });
-        }, 100); // retraso breve para asegurar render
+        }, 100);
     };
+
+    const entrenamientosOrdenados = [...entrenamientos].sort((a, b) => {
+        let valA, valB;
+        if (sortBy === "fecha") {
+            valA = a.fecha || "";
+            valB = b.fecha || "";
+        } else if (sortBy === "hora") {
+            valA = a.hora || "";
+            valB = b.hora || "";
+        } else if (sortBy === "lugar") {
+            valA = (a.lugar || "").toLowerCase();
+            valB = (b.lugar || "").toLowerCase();
+        } else if (sortBy === "duracion") {
+            valA = Number(a.duracion) || 0;
+            valB = Number(b.duracion) || 0;
+        } else if (sortBy === "asistencias") {
+            valA = (a.asistencias?.filter(x => x.presente).length) || 0;
+            valB = (b.asistencias?.filter(x => x.presente).length) || 0;
+        } else {
+            valA = a.fecha || "";
+            valB = b.fecha || "";
+        }
+        if (valA < valB) return sortDir === "asc" ? -1 : 1;
+        if (valA > valB) return sortDir === "asc" ? 1 : -1;
+        return 0;
+    });
 
     if (!equipoId)
         return (
@@ -65,7 +128,7 @@ export default function Entrenamientos() {
         <div className="container mt-4">
             <h3 className="mb-3 d-flex align-items-center">
                 <FaDumbbell className="me-2" />
-                Entrenamiento
+                Entrenamientos
             </h3>
 
             <div ref={formRef} className="mb-4">
@@ -80,61 +143,111 @@ export default function Entrenamientos() {
             <hr className="my-4" style={{ borderTop: "2px solid #888" }} />
 
             <div>
-                <h5 className="mb-3">Listado de entrenamientos</h5>
-                <Table striped bordered hover responsive>
+                <div className="d-flex align-items-center mb-2">
+                    <h5 className="mb-0 me-2">Listado de entrenamientos</h5>
+                    <OverlayTrigger
+                        placement="top"
+                        overlay={
+                            <Tooltip>
+                                Hacé clic en los títulos de las columnas para ordenar la tabla.<br />
+                                La columna “Asistieron” muestra solo los presentes registrados.<br />
+                                Usá los íconos para ver detalle, editar o eliminar cada entrenamiento.
+                            </Tooltip>
+                        }
+                    >
+                        <FaInfoCircle className="text-secondary" style={{ cursor: "pointer" }} />
+                    </OverlayTrigger>
+                </div>
+                <Table striped bordered hover responsive size="sm" className="mb-4">
                     <thead>
                         <tr>
-                            <th>Fecha</th>
-                            <th>Hora</th>
-                            <th>Lugar</th>
-                            <th>Duración (min)</th>
-                            <th>Asistieron</th>
-                            <th>Acciones</th>
+                            {COLS.map(col => (
+                                <th
+                                    key={col.key}
+                                    style={{
+                                        width: col.width,
+                                        cursor: col.orderable ? "pointer" : "default",
+                                        userSelect: "none",
+                                        verticalAlign: "middle",
+                                        textAlign: "center"
+                                    }}
+                                    className="align-middle bg-body-tertiary text-center"
+                                    onClick={() => {
+                                        if (!col.orderable) return;
+                                        if (sortBy === col.key) {
+                                            setSortDir(d => (d === "asc" ? "desc" : "asc"));
+                                        } else {
+                                            setSortBy(col.key);
+                                            setSortDir("asc");
+                                        }
+                                    }}
+                                    tabIndex={col.orderable ? 0 : undefined}
+                                >
+                                    {col.label}
+                                    {col.orderable && renderSortIcon(sortBy, sortDir, col.key)}
+                                </th>
+                            ))}
                         </tr>
                     </thead>
                     <tbody>
-                        {entrenamientos.length === 0 ? (
+                        {entrenamientosOrdenados.length === 0 ? (
                             <tr>
-                                <td colSpan={6} className="text-center text-muted">
+                                <td colSpan={COLS.length} className="text-center text-muted">
                                     No hay entrenamientos registrados para este equipo.
                                 </td>
                             </tr>
                         ) : (
-                            entrenamientos.map((p) => {
+                            entrenamientosOrdenados.map((p, idx) => {
                                 const presentes = p.asistencias?.filter(a => a.presente).length || 0;
                                 return (
                                     <tr key={p.id}>
-                                        <td>{p.fecha}</td>
-                                        <td>{p.hora}</td>
-                                        <td>{p.lugar}</td>
-                                        <td>{p.duracion || "-"}</td>
-                                        <td>{presentes}</td>
-                                        <td>
-                                            <Button
-                                                as={Link}
-                                                to={`/entrenamientos/${p.id}`}
-                                                variant="outline-info"
-                                                size="sm"
-                                                title="Ver detalle"
-                                                className="me-2"
-                                            >
-                                                <FaEye />
-                                            </Button>
-                                            <Button
-                                                variant="outline-warning"
-                                                className="me-2"
-                                                size="sm"
-                                                onClick={() => handleEditar(p)}
-                                            >
-                                                <FaEdit />
-                                            </Button>
-                                            <Button
-                                                variant="outline-danger"
-                                                size="sm"
-                                                onClick={() => handleEliminar(p.id)}
-                                            >
-                                                <FaTrash />
-                                            </Button>
+                                        <td className="text-center align-middle">{idx + 1}</td>
+                                        <td className="text-center align-middle">{p.fecha}</td>
+                                        <td className="text-center align-middle">{p.hora}</td>
+                                        <td className="text-center align-middle">{p.lugar}</td>
+                                        <td className="text-center align-middle">{p.duracion || "-"}</td>
+                                        <td className="text-center align-middle">{presentes}</td>
+                                        <td className="text-center align-middle">
+                                            <OverlayTrigger placement="top" overlay={<Tooltip>Ver detalle</Tooltip>}>
+                                                <span>
+                                                    <Button
+                                                        as={Link}
+                                                        to={`/entrenamientos/${p.id}`}
+                                                        variant="link"
+                                                        size="sm"
+                                                        className="p-0 me-2 text-info"
+                                                        style={{ fontSize: 18 }}
+                                                    >
+                                                        <FaEye />
+                                                    </Button>
+                                                </span>
+                                            </OverlayTrigger>
+                                            <OverlayTrigger placement="top" overlay={<Tooltip>Editar</Tooltip>}>
+                                                <span>
+                                                    <Button
+                                                        variant="link"
+                                                        className="p-0 me-2 text-warning"
+                                                        size="sm"
+                                                        style={{ fontSize: 18 }}
+                                                        onClick={() => handleEditar(p)}
+                                                    >
+                                                        <FaEdit />
+                                                    </Button>
+                                                </span>
+                                            </OverlayTrigger>
+                                            <OverlayTrigger placement="top" overlay={<Tooltip>Eliminar</Tooltip>}>
+                                                <span>
+                                                    <Button
+                                                        variant="link"
+                                                        className="p-0 text-danger"
+                                                        size="sm"
+                                                        style={{ fontSize: 18 }}
+                                                        onClick={() => handleEliminar(p.id)}
+                                                    >
+                                                        <FaTrash />
+                                                    </Button>
+                                                </span>
+                                            </OverlayTrigger>
                                         </td>
                                     </tr>
                                 );
@@ -143,6 +256,14 @@ export default function Entrenamientos() {
                     </tbody>
                 </Table>
             </div>
+            {/* Alerta flotante reutilizable */}
+            <AlertaFlotante
+                show={alerta.show}
+                mensaje={alerta.mensaje}
+                tipo={alerta.tipo}
+                ms={2400}
+                onClose={() => setAlerta(a => ({ ...a, show: false }))}
+            />
         </div>
     );
 }

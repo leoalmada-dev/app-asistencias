@@ -59,6 +59,7 @@ export default function EntrenamientoForm({
             const hoy = new Date().toISOString().split("T")[0];
             const ultimaHora = localStorage.getItem("ultimaHoraEntrenamiento") || "18:00";
             const ultimaDuracion = parseInt(localStorage.getItem("ultimaDuracionEntrenamiento")) || 60;
+            const ultimoLugar = localStorage.getItem("ultimoLugarEntrenamiento") || ""; // <<< NUEVO
 
             const asistenciasIniciales = jugadores.map((j) => ({
                 jugadorId: j.id,
@@ -70,7 +71,7 @@ export default function EntrenamientoForm({
             setForm({
                 fecha: hoy,
                 hora: ultimaHora,
-                lugar: "",
+                lugar: ultimoLugar, // <<< PRE-CARGA AQUÍ
                 duracion: ultimaDuracion,
                 asistencias: asistenciasIniciales
             });
@@ -108,6 +109,7 @@ export default function EntrenamientoForm({
         onSave(form);
         localStorage.setItem("ultimaHoraEntrenamiento", form.hora);
         localStorage.setItem("ultimaDuracionEntrenamiento", form.duracion.toString());
+        localStorage.setItem("ultimoLugarEntrenamiento", form.lugar);
 
         if (!modoEdicion) {
             const hoy = new Date().toISOString().split("T")[0];

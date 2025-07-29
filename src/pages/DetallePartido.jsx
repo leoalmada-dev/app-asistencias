@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Table, Button, Form, Alert, Badge, OverlayTrigger, Tooltip } from "react-bootstrap";
-import { FaTimes, FaFutbol, FaEdit, FaInfoCircle } from "react-icons/fa";
+import { FaTimes, FaFutbol, FaEdit, FaInfoCircle, FaArrowLeft } from "react-icons/fa";
 import {
   obtenerPartidos,
   actualizarPartido,
@@ -146,8 +146,8 @@ export default function DetallePartido() {
   const totalParticipantes = participaciones.filter(p => p.jugadorId).length;
   const minutosPromedio = participaciones.length
     ? Math.round(participaciones
-        .map(p => (parseInt(p.minutoSalida) - parseInt(p.minutoEntrada)))
-        .reduce((a, b) => a + b, 0) / participaciones.length)
+      .map(p => (parseInt(p.minutoSalida) - parseInt(p.minutoEntrada)))
+      .reduce((a, b) => a + b, 0) / participaciones.length)
     : 0;
   const goleadores = participaciones.filter(p => p.goles > 0);
 
@@ -159,17 +159,22 @@ export default function DetallePartido() {
 
   return (
     <div className="container mt-4">
-      <Button
-        variant="outline-secondary"
-        className="mb-3"
-        onClick={() => navigate(-1)}
-      >
-        ← Volver
-      </Button>
+      <div className="mb-3">
+        <Button
+          title="Volver a la lista de Partidos"
+          variant="outline-secondary"
+          className="d-inline-flex align-items-center gap-2 rounded-pill shadow-sm"
+          onClick={() => navigate(-1)}
+          size="sm"
+        >
+          <FaArrowLeft style={{ fontSize: 18, marginRight: 4, opacity: 0.8 }} />
+          Volver
+        </Button>
+      </div>
 
       <h4 className="mb-3 d-flex align-items-center">
         <FaFutbol className="me-2" />
-        Detalle de partido
+        Detalles del partido
       </h4>
 
       <div className="mb-3">
@@ -223,7 +228,7 @@ export default function DetallePartido() {
 
         <Table bordered hover size="sm">
           <thead>
-            <tr  className="text-center">
+            <tr className="text-center">
               <th style={{ width: "5%" }}>#</th>
               <th style={{ width: "40%" }}>Jugador</th>
               <th style={{ width: "15%" }}>Entrada</th>

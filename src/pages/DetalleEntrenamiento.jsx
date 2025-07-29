@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { obtenerEntrenamientos, actualizarEntrenamiento, obtenerJugadores } from "../hooks/useDB";
 import { Table, Button, Form, Alert, Badge, OverlayTrigger, Tooltip } from "react-bootstrap";
-import {  FaInfoCircle } from "react-icons/fa";
+import { FaArrowLeft, FaInfoCircle } from "react-icons/fa";
 import { FaDumbbell } from "react-icons/fa6";
 
 export default function DetalleEntrenamiento() {
@@ -59,12 +59,21 @@ export default function DetalleEntrenamiento() {
 
   return (
     <div className="container mt-4">
-      <Button variant="outline-secondary" className="mb-3" onClick={() => navigate(-1)}>
-        ← Volver
-      </Button>
+      <div className="mb-3">
+        <Button
+        title="Volver a la lista de Entrenamientos"
+          variant="outline-secondary"
+          className="d-inline-flex align-items-center gap-2 rounded-pill shadow-sm"
+          onClick={() => navigate(-1)}
+          size="sm"
+        >
+          <FaArrowLeft style={{ fontSize: 18, marginRight: 4, opacity: 0.8 }} />
+          Volver
+        </Button>
+      </div>
       <h3 className="mb-3 d-flex align-items-center">
         <FaDumbbell className="me-2" />
-        Detalle de entrenamiento
+        Detalles del entrenamiento
       </h3>
       <div className="mb-3">
         <b>Fecha:</b> {entrenamiento.fecha} <br />
