@@ -72,6 +72,7 @@ estadisticas de partidos filtrados x campeonato
 unificar "inactivo" gris
 jugadores activos estan filtrados? (faltan detalles)
 
+ajustar la validacion de participantes en partidos
 agregar FaInfoCircle necesarios (por ahora solo en detalles)
 implementacion de alertas de confirmacion (x ahora solo en jugadores)
 miunutos + descuentos

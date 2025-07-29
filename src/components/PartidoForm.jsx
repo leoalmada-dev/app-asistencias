@@ -384,6 +384,7 @@ export default function PartidoForm({ onSave, initialData = {}, modoEdicion = fa
                                             <div className="d-flex align-items-center">
                                                 <Form.Select
                                                     value={p.jugadorId}
+                                                    className="form-select-sm"
                                                     onChange={(e) => handleParticipacionChange(i, 'jugadorId', e.target.value)}
                                                     style={estaInactivo ? { color: "#aaa", fontStyle: "italic" } : {}}
                                                 >
@@ -422,6 +423,7 @@ export default function PartidoForm({ onSave, initialData = {}, modoEdicion = fa
                                         <td>
                                             <Form.Control
                                                 type="number"
+                                                className="form-select-sm"
                                                 value={p.minutoEntrada}
                                                 onChange={(e) => handleParticipacionChange(i, 'minutoEntrada', e.target.value)}
                                                 style={{ width: "100%" }}
@@ -430,6 +432,7 @@ export default function PartidoForm({ onSave, initialData = {}, modoEdicion = fa
                                         <td>
                                             <Form.Control
                                                 type="number"
+                                                className="form-select-sm"
                                                 value={p.minutoSalida}
                                                 onChange={(e) => handleParticipacionChange(i, 'minutoSalida', e.target.value)}
                                                 style={{ width: "100%" }}
@@ -438,6 +441,7 @@ export default function PartidoForm({ onSave, initialData = {}, modoEdicion = fa
                                         <td>
                                             <Form.Control
                                                 type="number"
+                                                className="form-select-sm"
                                                 min={0}
                                                 value={p.goles || 0}
                                                 onChange={e => handleParticipacionChange(i, 'goles', parseInt(e.target.value) || 0)}
