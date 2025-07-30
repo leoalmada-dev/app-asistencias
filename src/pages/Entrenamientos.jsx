@@ -12,6 +12,7 @@ import { useEquipo } from "../context/EquipoContext";
 import { Link } from "react-router-dom";
 import { FaDumbbell } from "react-icons/fa6";
 import AlertaFlotante from "../components/AlertaFlotante";
+import ModalConfirmarEliminacion from "../components/ModalConfirmarEliminacion";
 
 const COLS = [
     { key: "index", label: "#", width: "5%", orderable: false },
@@ -37,6 +38,10 @@ export default function Entrenamientos() {
     const [sortDir, setSortDir] = useState("desc");
     const { equipoId } = useEquipo();
     const formRef = useRef();
+
+    const [mostrarModal, setMostrarModal] = useState(false);
+    const [entrenamientoAEliminar, setEntrenamientoAEliminar] = useState(null);
+    const [eliminando, setEliminando] = useState(false);
 
     // NUEVO: estado para las alertas flotantes
     const [alerta, setAlerta] = useState({ show: false, mensaje: "", tipo: "success" });
@@ -72,18 +77,6 @@ export default function Entrenamientos() {
 
     const handleCancelarEdicion = () => setEditando(null);
 
-    const handleEliminar = async (id) => {
-        if (window.confirm("¿Eliminar este entrenamiento?")) {
-            await eliminarEntrenamiento(id);
-            setAlerta({
-                show: true,
-                mensaje: "Entrenamiento eliminado correctamente.",
-                tipo: "success"
-            });
-            cargar();
-        }
-    };
-
     const handleEditar = (entrenamiento) => {
         setEditando(entrenamiento);
         setTimeout(() => {
@@ -116,6 +109,32 @@ export default function Entrenamientos() {
         if (valA > valB) return sortDir === "asc" ? 1 : -1;
         return 0;
     });
+
+    const handleEliminar = (entrenamiento) => {
+        setEntrenamientoAEliminar(entrenamiento);
+        setMostrarModal(true);
+    };
+
+    const confirmarEliminacion = async () => {
+        setEliminando(true);
+        await eliminarEntrenamiento(entrenamientoAEliminar.id);
+        setMostrarModal(false);
+        setEliminando(false);
+        setAlerta({
+            show: true,
+            mensaje: `Entrenamiento del ${entrenamientoAEliminar.fecha} eliminado correctamente.`,
+            tipo: "success"
+        });
+        cargar();
+    };
+
+    const formatearFecha = (fechaStr) => {
+        console.log(fechaStr)
+        if (!fechaStr) return "";
+        const fecha = new Date(fechaStr);
+        return fecha.toISOString().split("T")[0]; // yyyy-mm-dd
+    };
+
 
     if (!equipoId)
         return (
@@ -242,7 +261,7 @@ export default function Entrenamientos() {
                                                         className="p-0 text-danger"
                                                         size="sm"
                                                         style={{ fontSize: 18 }}
-                                                        onClick={() => handleEliminar(p.id)}
+                                                        onClick={() => handleEliminar(p)}
                                                     >
                                                         <FaTrash />
                                                     </Button>
@@ -256,6 +275,17 @@ export default function Entrenamientos() {
                     </tbody>
                 </Table>
             </div>
+
+            {/* Modal Confirmación eliminación */}
+            <ModalConfirmarEliminacion
+                show={mostrarModal}
+                onHide={() => setMostrarModal(false)}
+                onConfirm={confirmarEliminacion}
+                nombre={`el entrenamiento del día: ${formatearFecha(entrenamientoAEliminar?.fecha)}`}
+                tipo="entrenamiento"
+                loading={eliminando}
+            />
+
             {/* Alerta flotante reutilizable */}
             <AlertaFlotante
                 show={alerta.show}

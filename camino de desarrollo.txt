@@ -72,8 +72,8 @@ estadisticas de partidos filtrados x campeonato
 unificar "inactivo" gris
 jugadores activos estan filtrados?
 implementacion de alertas de confirmacion
-
 ajustar la validacion de participantes en partidos
+
 agregar FaInfoCircle necesarios (por ahora solo en detalles)
 minutos + descuentos
 calculo de cambios en baby, entrar nuevamente
