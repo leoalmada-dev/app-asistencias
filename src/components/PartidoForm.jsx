@@ -24,6 +24,7 @@ export default function PartidoForm({ onSave, initialData = {}, modoEdicion = fa
     const [showModal, setShowModal] = useState(false);
     const [nuevoCampeonato, setNuevoCampeonato] = useState({ nombre: "", anio: "" });
     const [guardando, setGuardando] = useState(false);
+    const [jugadoresSeleccionados, setJugadoresSeleccionados] = useState([]);
     const { equipoId } = useEquipo();
 
     useEffect(() => {
@@ -78,6 +79,14 @@ export default function PartidoForm({ onSave, initialData = {}, modoEdicion = fa
         }
     }, [initialData, modoEdicion]);
 
+    useEffect(() => {
+        const seleccionados = form.participaciones
+            .map(p => parseInt(p.jugadorId))
+            .filter(id => !isNaN(id));
+        setJugadoresSeleccionados(seleccionados);
+        console.log(seleccionados)
+    }, [form.participaciones]);
+
     const handleTipoChange = (e) => {
         const value = e.target.value;
         setForm(f => ({
@@ -94,6 +103,16 @@ export default function PartidoForm({ onSave, initialData = {}, modoEdicion = fa
 
     const handleParticipacionChange = (index, campo, valor) => {
         const nuevas = [...form.participaciones];
+
+        if (campo === "jugadorId") {
+            // Validar si ya está seleccionado en otra fila
+            const yaUsado = nuevas.some((p, i) => i !== index && p.jugadorId === valor);
+            if (yaUsado) {
+                alert("Ese jugador ya fue seleccionado en otra participación.");
+                return;
+            }
+        }
+
         nuevas[index][campo] = valor;
         setForm({ ...form, participaciones: nuevas });
     };
@@ -114,9 +133,12 @@ export default function PartidoForm({ onSave, initialData = {}, modoEdicion = fa
     };
 
     const agregarTodosLosJugadores = () => {
-        const existentes = form.participaciones.map(p => p.jugadorId);
+        const existentesValidos = form.participaciones
+            .filter(p => !isNaN(parseInt(p.jugadorId)))
+            .map(p => parseInt(p.jugadorId));
+
         const nuevos = jugadoresActivos
-            .filter(j => !existentes.includes(j.id))
+            .filter(j => !existentesValidos.includes(j.id))
             .sort((a, b) => (a.nombre || "").localeCompare(b.nombre || ""))
             .map(j => ({
                 jugadorId: j.id,
@@ -126,7 +148,7 @@ export default function PartidoForm({ onSave, initialData = {}, modoEdicion = fa
             }));
 
         const todos = [
-            ...form.participaciones,
+            ...form.participaciones.filter(p => !isNaN(parseInt(p.jugadorId))), // solo válidos
             ...nuevos
         ];
 
@@ -152,6 +174,20 @@ export default function PartidoForm({ onSave, initialData = {}, modoEdicion = fa
 
     const handleSubmit = (e) => {
         e.preventDefault();
+        const ids = form.participaciones.map(p => parseInt(p.jugadorId));
+
+        // Validación: sin vacíos ni inválidos
+        if (ids.some(id => isNaN(id))) {
+            alert("Hay participaciones sin jugador asignado.");
+            return;
+        }
+
+        const unicos = new Set(ids);
+        if (unicos.size !== ids.length) {
+            alert("Hay jugadores duplicados en las participaciones.");
+            return;
+        }
+
         const envio = { ...form, torneo: form.tipo === "amistoso" ? "Amistoso" : form.torneo };
         onSave(envio);
 
@@ -385,23 +421,21 @@ export default function PartidoForm({ onSave, initialData = {}, modoEdicion = fa
                                                 <Form.Select
                                                     value={p.jugadorId}
                                                     className="form-select-sm"
-                                                    onChange={(e) => handleParticipacionChange(i, 'jugadorId', e.target.value)}
+                                                    onChange={(e) => handleParticipacionChange(i, 'jugadorId', parseInt(e.target.value))}
                                                     style={estaInactivo ? { color: "#aaa", fontStyle: "italic" } : {}}
                                                 >
                                                     <option value="">Seleccionar</option>
                                                     {[...jugadoresActivos, ...jugadoresTodos.filter(j => !j.activo && form.participaciones.some(pp => pp.jugadorId === j.id))]
                                                         .sort((a, b) => (a.nombre || "").localeCompare(b.nombre || ""))
                                                         .map(j => {
-                                                            const yaUsado = form.participaciones.some(
-                                                                (otro, idx) => idx !== i && otro.jugadorId === j.id
-                                                            );
+                                                            const deshabilitado = jugadoresSeleccionados.includes(j.id) && j.id !== p.jugadorId;
                                                             const inactivo = !j.activo;
                                                             const label = j.nombre + (j.numero ? ` - #${j.numero}` : "");
                                                             return (
                                                                 <option
                                                                     key={j.id}
                                                                     value={j.id}
-                                                                    disabled={yaUsado || (!j.activo && !form.participaciones.some(pp => pp.jugadorId === j.id))}
+                                                                    disabled={deshabilitado}
                                                                     style={inactivo ? { color: "#aaa", fontStyle: "italic" } : {}}
                                                                     title={label + (inactivo ? " (inactivo)" : "")}
                                                                 >
