@@ -211,20 +211,28 @@ export default function PartidosStats() {
 
     // Exportar tabla
     const handleExportarExcel = () => {
+        const datosTabla = datosOrdenados.map((j, i) => ({
+            "#": i + 1,
+            "Jugador": j.nombre,
+            "Nro": j.numero || "-",
+            "Posición Principal": getPosicionData(j.posicion)?.label || "-",
+            "Posición Secundaria": getPosicionData(j.posicionSecundaria)?.label || "-",
+            "Minutos Totales": j.minutosTotales,
+            "Partidos Jugados": j.partidosJugados,
+            "Promedio Min/Partido": j.promedioMin,
+            "Goles": j.goles,
+            "% Partidos Jugados": `${j.porcentaje}%`,
+        }));
+
         exportarEstadisticasAExcel({
-            datosTabla: datosOrdenados.map(j => ({
-                Nombre: j.nombre,
-                Número: j.numero,
-                Posición: j.posicion,
-                "Posición secundaria": j.posicionSecundaria,
-                Minutos: j.minutosTotales,
-                Partidos: j.partidosJugados,
-                "Prom. min/partido": j.promedioMin,
-                Goles: j.goles,
-                "% Partidos jugados": j.porcentaje + "%",
-            })),
+            datosTabla,
             nombreArchivo,
-            titulo
+            titulo,
+            resumen: {
+                "Partidos Jugados": resumen.totalPartidos,
+                "Goles a Favor": resumen.totalGoles,
+                "Goles en Contra": resumen.totalGolesContra
+            }
         });
     };
 
@@ -382,7 +390,7 @@ export default function PartidosStats() {
                     </div>
                 </Col>
             </Row>
-<hr className="my-4" style={{ borderTop: "2px solid #888" }} />
+            <hr className="my-4" style={{ borderTop: "2px solid #888" }} />
             {/* Tabla ajustada y ordenable */}
             <div className="d-flex justify-content-between align-items-center mb-2">
                 <h5 className="mb-0 me-3">Listado de jugadores</h5>

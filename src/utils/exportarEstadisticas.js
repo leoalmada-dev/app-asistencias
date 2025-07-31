@@ -1,28 +1,33 @@
 import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
 
-export function exportarEstadisticasAExcel({
-    datosTabla,
-    nombreArchivo = "Estadisticas",
-    titulo = "",
-    // otros props
-}) {
-    // 1. Crea worksheet y workbook
-    const ws = XLSX.utils.json_to_sheet(datosTabla, { origin: "A2" });
-    const wb = XLSX.utils.book_new();
+// ejemplo de la firma de la función
+export const exportarEstadisticasAExcel = ({ datosTabla, nombreArchivo, titulo, resumen }) => {
+    const workbook = XLSX.utils.book_new();
 
-    // 2. Agrega título si hay
-    if (titulo) {
-        XLSX.utils.sheet_add_aoa(ws, [[titulo]], { origin: "A1" });
-    }
+    // Resumen inicial
+    const filasResumen = [
+        [titulo],
+        [],
+        ["Resumen"],
+        ...Object.entries(resumen).map(([key, value]) => [key, value]),
+        [],
+        ["Datos Detallados"],
+        Object.keys(datosTabla[0]),
+        ...datosTabla.map(row => Object.values(row)),
+    ];
 
-    // 3. (Opcional) Dale formato a la celda A1 para que sea grande/negrita
+    const worksheet = XLSX.utils.aoa_to_sheet(filasResumen);
 
-    // 4. Arma workbook y guarda
-    XLSX.utils.book_append_sheet(wb, ws, "Estadísticas");
-    const buf = XLSX.write(wb, { type: "array", bookType: "xlsx" });
-    saveAs(
-        new Blob([buf], { type: "application/octet-stream" }),
-        `${nombreArchivo}.xlsx`
-    );
-}
+    // Ajustar anchos de columna automáticamente
+    const maxColumnWidths = Object.keys(datosTabla[0]).map((_, colIndex) => {
+        return Math.max(
+            ...filasResumen.map(row => (row[colIndex] ? row[colIndex].toString().length : 10))
+        ) + 5;
+    });
+
+    worksheet["!cols"] = maxColumnWidths.map(w => ({ wch: w }));
+
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Estadísticas");
+    XLSX.writeFile(workbook, `${nombreArchivo}.xlsx`);
+};

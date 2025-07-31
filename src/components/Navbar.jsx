@@ -26,7 +26,7 @@ export default function CustomNavbar() {
     >
       <Container>
         <Navbar.Brand as={Link} to="/" onClick={handleNavClick}>
-          Fútbol Asistencias
+          MiPlantel
         </Navbar.Brand>
 
         <Navbar.Toggle aria-controls="menu-principal" />

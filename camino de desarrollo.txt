@@ -79,6 +79,7 @@ minutos + descuentos
 calculo de cambios en baby, entrar nuevamente
 pensar bien la compatibilidad de asistencias para baby futbol o la mayor q son convocados
 
+colo #239b56
 
 
 PT- Portero
