@@ -11,6 +11,10 @@ import { exportarGraficoComoPNG } from "../utils/exportarGraficoComoPNG";
 import { FaFileExcel, FaDownload, } from "react-icons/fa6";
 import { CATEGORIAS_POSICION } from "../data/posiciones";
 import { FaChartBar } from "react-icons/fa";
+import html2canvas from "html2canvas";
+import { FaImage } from "react-icons/fa6"; // icono para el botón
+
+
 
 const NOMBRES_MESES = [
     "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
@@ -38,6 +42,7 @@ const COLS = [
 ];
 
 export default function PartidosStats() {
+    const tablaRef = useRef(null);
     const [estadisticas, setEstadisticas] = useState([]);
     const [orden, setOrden] = useState("jugador");
     const [sortDir, setSortDir] = useState("asc");
@@ -236,6 +241,21 @@ export default function PartidosStats() {
         });
     };
 
+    const handleExportarImagen = async () => {
+        if (!tablaRef.current) return;
+        // Opcional: Scroll hasta la tabla si está fuera de vista
+        tablaRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
+        setTimeout(async () => {
+            const canvas = await html2canvas(tablaRef.current, {
+                scale: 5,
+            });
+            const link = document.createElement("a");
+            link.download = `${nombreArchivo}.png`;
+            link.href = canvas.toDataURL();
+            link.click();
+        }, 400); // pequeño delay si querés hacer scroll antes de tomar la captura
+    };
+
     // Exportar gráficos (por separado)
     const handleExportarGraficoMinutos = () => {
         exportarGraficoComoPNG(graficoMinutosRef, `Minutos_${equipoNombre}_${filtroMesNombre}_${filtroAnio}`);
@@ -393,115 +413,130 @@ export default function PartidosStats() {
             <hr className="my-4" style={{ borderTop: "2px solid #888" }} />
             {/* Tabla ajustada y ordenable */}
             <div className="d-flex justify-content-between align-items-center mb-2">
-                <h5 className="mb-0 me-3">Listado de jugadores</h5>
-                <Button
-                    size="sm"
-                    variant="link"
-                    className="p-0"
-                    style={{ textDecoration: "none" }}
-                    title="Exportar tabla a Excel"
-                    onClick={handleExportarExcel}
-                >
-                    <FaFileExcel size={26} color="#28a745" />
-                </Button>
+                {/* Título a la izquierda */}
+                <h5 className="mb-0" style={{ flex: 1 }}>Listado de jugadores</h5>
+                {/* Botones a la derecha, agrupados */}
+                <div className="d-flex align-items-center gap-1">
+                    <Button
+                        size="sm"
+                        variant="link"
+                        className="p-0 me-2"
+                        style={{ textDecoration: "none" }}
+                        title="Exportar tabla como imagen PNG"
+                        onClick={handleExportarImagen}
+                    >
+                        <FaImage size={25} className="text-primary" />
+                    </Button>
+                    <Button
+                        size="sm"
+                        variant="link"
+                        className="p-0"
+                        style={{ textDecoration: "none" }}
+                        title="Exportar tabla a Excel"
+                        onClick={handleExportarExcel}
+                    >
+                        <FaFileExcel size={26} color="#28a745" />
+                    </Button>
+                </div>
             </div>
-
-            <Table striped bordered hover responsive size="sm" className="mt-2">
-                <thead>
-                    <tr>
-                        {COLS.map(col => (
-                            <th
-                                key={col.key}
-                                style={{
-                                    width: col.width,
-                                    cursor: col.orderable ? "pointer" : "default",
-                                    userSelect: "none",
-                                    background: "var(--bs-body-bg)",
-                                    verticalAlign: "middle"
-                                }}
-                                className={
-                                    "align-middle " +
-                                    (
-                                        col.align === "center"
-                                            ? "text-center"
-                                            : col.align === "start"
-                                                ? "text-start"
-                                                : ""
-                                    ) +
-                                    " bg-body-tertiary"
-                                }
-                                onClick={() => {
-                                    if (!col.orderable) return;
-                                    if (orden === col.key) {
-                                        setSortDir(d => (d === "asc" ? "desc" : "asc"));
-                                    } else {
-                                        setOrden(col.key);
-                                        setSortDir("asc");
+            <div ref={tablaRef}>
+                <Table striped bordered hover responsive size="sm" className="m-0">
+                    <thead>
+                        <tr>
+                            {COLS.map(col => (
+                                <th
+                                    key={col.key}
+                                    style={{
+                                        width: col.width,
+                                        cursor: col.orderable ? "pointer" : "default",
+                                        userSelect: "none",
+                                        background: "var(--bs-body-bg)",
+                                        verticalAlign: "middle"
+                                    }}
+                                    className={
+                                        "align-middle " +
+                                        (
+                                            col.align === "center"
+                                                ? "text-center"
+                                                : col.align === "start"
+                                                    ? "text-start"
+                                                    : ""
+                                        ) +
+                                        " bg-body-tertiary"
                                     }
-                                }}
-                                role={col.orderable ? "button" : undefined}
-                                tabIndex={col.orderable ? 0 : undefined}
-                            >
-                                {col.label}
-                                {col.orderable && renderSortIcon(col.key)}
-                            </th>
-                        ))}
-                    </tr>
-                </thead>
-                <tbody>
-                    {datosOrdenados.map((j, i) => {
-                        const pos1 = getPosicionData(j.posicion);
-                        const pos2 = getPosicionData(j.posicionSecundaria);
-                        return (
-                            <tr key={j.id}>
-                                <td className="text-center">{i + 1}</td>
-                                <td className="text-start">
-                                    <b>
-                                        {j.nombre}
-                                    </b>
-                                </td>
-                                <td className="text-center">
-                                    {j.numero ? <b>#{j.numero}</b> : <span className="text-muted">–</span>}
-                                </td>
-                                <td className="text-center">
-                                    {pos1 && (
-                                        <Badge
-                                            bg={pos1.color}
-                                            className="me-1"
-                                            title={pos1.label}
-                                            style={{ minWidth: 32 }}
-                                        >
-                                            {pos1.value}
+                                    onClick={() => {
+                                        if (!col.orderable) return;
+                                        if (orden === col.key) {
+                                            setSortDir(d => (d === "asc" ? "desc" : "asc"));
+                                        } else {
+                                            setOrden(col.key);
+                                            setSortDir("asc");
+                                        }
+                                    }}
+                                    role={col.orderable ? "button" : undefined}
+                                    tabIndex={col.orderable ? 0 : undefined}
+                                >
+                                    {col.label}
+                                    {col.orderable && renderSortIcon(col.key)}
+                                </th>
+                            ))}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {datosOrdenados.map((j, i) => {
+                            const pos1 = getPosicionData(j.posicion);
+                            const pos2 = getPosicionData(j.posicionSecundaria);
+                            return (
+                                <tr key={j.id}>
+                                    <td className="text-center">{i + 1}</td>
+                                    <td className="text-start">
+                                        <b>
+                                            {j.nombre}
+                                        </b>
+                                    </td>
+                                    <td className="text-center">
+                                        {j.numero ? <b>#{j.numero}</b> : <span className="text-muted">–</span>}
+                                    </td>
+                                    <td className="text-center">
+                                        {pos1 && (
+                                            <Badge
+                                                bg={pos1.color}
+                                                className="me-1"
+                                                title={pos1.label}
+                                                style={{ minWidth: 32 }}
+                                            >
+                                                {pos1.value}
+                                            </Badge>
+                                        )}
+                                        {pos2 && pos2.value !== pos1?.value && (
+                                            <Badge
+                                                bg={pos2.color}
+                                                title={pos2.label}
+                                                style={{ minWidth: 32 }}
+                                            >
+                                                {pos2.value}
+                                            </Badge>
+                                        )}
+                                    </td>
+                                    <td className="text-center">{j.minutosTotales}</td>
+                                    <td className="text-center">{j.partidosJugados}</td>
+                                    <td className="text-center">{j.promedioMin}</td>
+                                    <td className="text-center">
+                                        {j.goles > 0
+                                            ? <Badge bg="success" className="fs-6">{j.goles} ⚽</Badge>
+                                            : <span className="text-muted">-</span>}
+                                    </td>
+                                    <td className="text-center">
+                                        <Badge bg={j.porcentaje >= 80 ? "success" : j.porcentaje >= 50 ? "warning" : "secondary"}>
+                                            {j.porcentaje}%
                                         </Badge>
-                                    )}
-                                    {pos2 && pos2.value !== pos1?.value && (
-                                        <Badge
-                                            bg={pos2.color}
-                                            title={pos2.label}
-                                            style={{ minWidth: 32 }}
-                                        >
-                                            {pos2.value}
-                                        </Badge>
-                                    )}
-                                </td>
-                                <td className="text-center">{j.minutosTotales}</td>
-                                <td className="text-center">{j.partidosJugados}</td>
-                                <td className="text-center">{j.promedioMin}</td>
-                                <td className="text-center">
-                                    {j.goles > 0
-                                        ? <Badge bg="success" className="fs-6">{j.goles} ⚽</Badge>
-                                        : <span className="text-muted">-</span>}
-                                </td>
-                                <td className="text-center">
-                                    <Badge bg={j.porcentaje >= 80 ? "success" : j.porcentaje >= 50 ? "warning" : "secondary"}>
-                                        {j.porcentaje}%
-                                    </Badge>
-                                </td>
-                            </tr>
-                        );
-                    })}
-                </tbody>
-            </Table>
+                                    </td>
+                                </tr>
+                            );
+                        })}
+                    </tbody>
+                </Table>
+            </div>
             <div className="mt-3 small text-secondary">
                 <span>
                     <b>Tip:</b> Hacé clic en el encabezado para ordenar la tabla. Exportá la tabla o los gráficos desde los íconos de la derecha.
