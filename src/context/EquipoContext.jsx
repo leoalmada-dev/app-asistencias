@@ -14,6 +14,19 @@ export function EquipoProvider({ children }) {
         if (lista.length > 0 && !equipoId) setEquipoId(lista[0].id);
     };
 
+    const actualizarConfigEquipo = async (idEquipo, nuevaConfig) => {
+        // Buscá el equipo y actualizá solo la config
+        setEquipos(prev =>
+            prev.map(e => e.id === idEquipo
+                ? { ...e, configPartidos: { ...e.configPartidos, ...nuevaConfig } }
+                : e
+            )
+        );
+        // Guardalo en tu DB también si lo necesitas (opcional)
+        // await actualizarEquipo(idEquipo, { configPartidos: { ...nuevaConfig } });
+    };
+
+
     useEffect(() => {
         cargarEquipos();
     }, []);
@@ -24,7 +37,8 @@ export function EquipoProvider({ children }) {
             setEquipos,
             equipoId,
             setEquipoId,
-            cargarEquipos
+            cargarEquipos,
+            actualizarConfigEquipo,
         }}>
             {children}
         </EquipoContext.Provider>
