@@ -3,9 +3,10 @@ import Jugadores from "./Jugadores";
 import Equipos from "./Equipos";
 import Campeonatos from "./Campeonatos"; // 👈 NUEVO
 import { Tabs, Tab } from "react-bootstrap";
-import { FaUserFriends, FaDatabase } from "react-icons/fa";
+import { FaUserFriends, FaDatabase, FaCogs } from "react-icons/fa";
 import { FaShirt, FaTrophy } from "react-icons/fa6";
 import Backup from "../components/Backup";
+import ConfiguracionPartidosEquipo from "../components/ConfiguracionPartidosEquipo";
 
 export default function Configuracion() {
   return (
@@ -36,6 +37,17 @@ export default function Configuracion() {
           <Campeonatos />
         </Tab>
         <Tab
+          eventKey="configPartidos"
+          title={
+            <span className="d-flex align-items-center">
+              <FaCogs className="me-2" />
+              Configuración de Partidos
+            </span>
+          }
+        >
+          <ConfiguracionPartidosEquipo />
+        </Tab>
+        <Tab
           eventKey="equipos"
           title={
             <span className="d-flex align-items-center">
@@ -45,7 +57,7 @@ export default function Configuracion() {
           }
         >
           <Equipos />
-        </Tab>        
+        </Tab>
         <Tab
           eventKey="backup"
           title={

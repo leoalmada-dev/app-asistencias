@@ -2,13 +2,12 @@ import { useEffect, useState } from "react";
 import { Form, Button, Row, Col, Table, Badge, OverlayTrigger, Tooltip, InputGroup, Modal } from "react-bootstrap";
 import { obtenerJugadores, obtenerCampeonatos, agregarCampeonato } from "../hooks/useDB";
 import { useEquipo } from "../context/EquipoContext";
-import { FaTimes, FaPlus } from "react-icons/fa";
+import { FaTimes, FaPlus, FaCogs } from "react-icons/fa";
 
 export default function PartidoForm({ onSave, initialData = {}, modoEdicion = false, onCancel }) {
     const [form, setForm] = useState({
         fecha: "",
         hora: "",
-        duracion: 60,
         tipo: "campeonato",
         torneo: "",
         rival: "",
@@ -25,7 +24,42 @@ export default function PartidoForm({ onSave, initialData = {}, modoEdicion = fa
     const [nuevoCampeonato, setNuevoCampeonato] = useState({ nombre: "", anio: "" });
     const [guardando, setGuardando] = useState(false);
     const [jugadoresSeleccionados, setJugadoresSeleccionados] = useState([]);
-    const { equipoId } = useEquipo();
+    const { equipos, equipoId } = useEquipo();
+    const equipo = equipos.find(e => e.id === equipoId);
+
+    const configPorDefecto = equipo?.configPartidos || {
+        duracion: 60,
+        cambios: 7,
+        puedeReingresar: true,
+        jugadoresEnCancha: 9
+    };
+
+    // --- Estado override y modal config partido ---
+    const [overrideConfig, setOverrideConfig] = useState(null); // null=usa defaults
+    const [showConfigModal, setShowConfigModal] = useState(false);
+    const [configForm, setConfigForm] = useState(configPorDefecto);
+
+    useEffect(() => {
+        if (modoEdicion && initialData) {
+            setOverrideConfig({
+                duracion: initialData.duracion ?? configPorDefecto.duracion,
+                cambios: initialData.cambios ?? configPorDefecto.cambios,
+                puedeReingresar: typeof initialData.puedeReingresar === "boolean"
+                    ? initialData.puedeReingresar
+                    : configPorDefecto.puedeReingresar,
+                jugadoresEnCancha: initialData.jugadoresEnCancha ?? configPorDefecto.jugadoresEnCancha
+            });
+        } else {
+            setOverrideConfig(null);
+        }
+        // eslint-disable-next-line
+    }, [initialData, modoEdicion, equipoId]);
+
+    // Sync configForm con la config efectiva cada vez que se abre el modal
+    useEffect(() => {
+        if (showConfigModal) setConfigForm({ ...(overrideConfig || configPorDefecto) });
+        // eslint-disable-next-line
+    }, [showConfigModal]);
 
     useEffect(() => {
         if (equipoId) {
@@ -45,7 +79,6 @@ export default function PartidoForm({ onSave, initialData = {}, modoEdicion = fa
             setForm({
                 fecha: initialData.fecha || "",
                 hora: initialData.hora || "",
-                duracion: initialData.duracion || 60,
                 tipo: initialData.tipo || "campeonato",
                 torneo: initialData.torneo || "",
                 rival: initialData.rival || "",
@@ -62,12 +95,9 @@ export default function PartidoForm({ onSave, initialData = {}, modoEdicion = fa
         } else if (!modoEdicion) {
             const hoy = new Date().toISOString().split("T")[0];
             const ultimaHora = localStorage.getItem("ultimaHoraPartido") || "18:00";
-            const ultimaDuracion = parseInt(localStorage.getItem("ultimaDuracionPartido")) || 60;
-
             setForm({
                 fecha: hoy,
                 hora: ultimaHora,
-                duracion: ultimaDuracion,
                 tipo: "campeonato",
                 torneo: "",
                 rival: "",
@@ -84,7 +114,6 @@ export default function PartidoForm({ onSave, initialData = {}, modoEdicion = fa
             .map(p => parseInt(p.jugadorId))
             .filter(id => !isNaN(id));
         setJugadoresSeleccionados(seleccionados);
-        console.log(seleccionados)
     }, [form.participaciones]);
 
     const handleTipoChange = (e) => {
@@ -98,21 +127,18 @@ export default function PartidoForm({ onSave, initialData = {}, modoEdicion = fa
 
     const handleChange = (e) => {
         const { name, value } = e.target;
-        setForm({ ...form, [name]: name === "duracion" ? parseInt(value) : value });
+        setForm({ ...form, [name]: value });
     };
 
     const handleParticipacionChange = (index, campo, valor) => {
         const nuevas = [...form.participaciones];
-
         if (campo === "jugadorId") {
-            // Validar si ya está seleccionado en otra fila
             const yaUsado = nuevas.some((p, i) => i !== index && p.jugadorId === valor);
             if (yaUsado) {
                 alert("Ese jugador ya fue seleccionado en otra participación.");
                 return;
             }
         }
-
         nuevas[index][campo] = valor;
         setForm({ ...form, participaciones: nuevas });
     };
@@ -125,7 +151,7 @@ export default function PartidoForm({ onSave, initialData = {}, modoEdicion = fa
                 {
                     jugadorId: "",
                     minutoEntrada: 0,
-                    minutoSalida: f.duracion,
+                    minutoSalida: (overrideConfig || configPorDefecto).duracion,
                     goles: 0
                 }
             ]
@@ -136,22 +162,19 @@ export default function PartidoForm({ onSave, initialData = {}, modoEdicion = fa
         const existentesValidos = form.participaciones
             .filter(p => !isNaN(parseInt(p.jugadorId)))
             .map(p => parseInt(p.jugadorId));
-
         const nuevos = jugadoresActivos
             .filter(j => !existentesValidos.includes(j.id))
             .sort((a, b) => (a.nombre || "").localeCompare(b.nombre || ""))
             .map(j => ({
                 jugadorId: j.id,
                 minutoEntrada: 0,
-                minutoSalida: form.duracion,
+                minutoSalida: (overrideConfig || configPorDefecto).duracion,
                 goles: 0
             }));
-
         const todos = [
-            ...form.participaciones.filter(p => !isNaN(parseInt(p.jugadorId))), // solo válidos
+            ...form.participaciones.filter(p => !isNaN(parseInt(p.jugadorId))),
             ...nuevos
         ];
-
         const todosOrdenados = todos
             .map(p => ({
                 ...p,
@@ -172,37 +195,36 @@ export default function PartidoForm({ onSave, initialData = {}, modoEdicion = fa
         setForm({ ...form, participaciones: nuevas });
     };
 
+    // --- GUARDAR PARTIDO ---
+    const configEfectiva = overrideConfig || configPorDefecto;
+
     const handleSubmit = (e) => {
         e.preventDefault();
         const ids = form.participaciones.map(p => parseInt(p.jugadorId));
-
-        // Validación: sin vacíos ni inválidos
         if (ids.some(id => isNaN(id))) {
             alert("Hay participaciones sin jugador asignado.");
             return;
         }
-
         const unicos = new Set(ids);
         if (unicos.size !== ids.length) {
             alert("Hay jugadores duplicados en las participaciones.");
             return;
         }
-
-        const envio = { ...form, torneo: form.tipo === "amistoso" ? "Amistoso" : form.torneo };
+        const envio = {
+            ...form,
+            torneo: form.tipo === "amistoso" ? "Amistoso" : form.torneo,
+            ...configEfectiva // ⬅️ importante
+        };
         onSave(envio);
 
         localStorage.setItem("ultimaHoraPartido", form.hora);
-        localStorage.setItem("ultimaDuracionPartido", form.duracion.toString());
 
         if (!modoEdicion) {
             const hoy = new Date().toISOString().split("T")[0];
             const ultimaHora = localStorage.getItem("ultimaHoraPartido") || "18:00";
-            const ultimaDuracion = parseInt(localStorage.getItem("ultimaDuracionPartido")) || 60;
-
             setForm({
                 fecha: hoy,
                 hora: ultimaHora,
-                duracion: ultimaDuracion,
                 tipo: "campeonato",
                 torneo: "",
                 rival: "",
@@ -211,6 +233,7 @@ export default function PartidoForm({ onSave, initialData = {}, modoEdicion = fa
                 participaciones: [],
                 cambios: [],
             });
+            setOverrideConfig(null);
         }
     };
 
@@ -232,17 +255,30 @@ export default function PartidoForm({ onSave, initialData = {}, modoEdicion = fa
         });
         setGuardando(false);
         setShowModal(false);
-        // Refresca campeonatos (solo activos)
         const cs = await obtenerCampeonatos(equipoId);
         setCampeonatos(cs.filter(c => c.activo));
-        // Selecciona el último ingresado
         setForm(f => ({
             ...f,
             torneo: nuevoCampeonato.nombre
         }));
     };
 
-    // Utilidad para ver si el jugador es inactivo
+    // --- MODAL CONFIGURACIÓN DE PARTIDO ---
+    const handleShowConfigModal = () => setShowConfigModal(true);
+    const handleCloseConfigModal = () => setShowConfigModal(false);
+    const handleGuardarConfigPartido = () => {
+        setOverrideConfig(configForm);
+        setShowConfigModal(false);
+    };
+    const handleConfigChange = (e) => {
+        const { name, type, value, checked } = e.target;
+        setConfigForm(f => ({
+            ...f,
+            [name]: type === "checkbox" ? checked : Number(value)
+        }));
+    };
+
+    // --- Utilidad para ver si el jugador es inactivo
     const isInactivo = (jugadorId) => {
         const jug = jugadoresTodos.find(j => j.id === jugadorId);
         return jug && !jug.activo;
@@ -255,39 +291,32 @@ export default function PartidoForm({ onSave, initialData = {}, modoEdicion = fa
                     <legend className="float-none w-auto px-2 fs-5">
                         {modoEdicion ? "Editar partido" : "Registrar partido"}
                     </legend>
-
                     <Row>
-                        <Col md={4}>
-                            <Form.Group className="mb-3">
+                        <Col xs={12} md={6} className="mb-2">
+                            <Form.Group>
                                 <Form.Label>Fecha</Form.Label>
-                                <Form.Control type="date" name="fecha" value={form.fecha} onChange={handleChange} required />
-                            </Form.Group>
-                        </Col>
-                        <Col md={4}>
-                            <Form.Group className="mb-3">
-                                <Form.Label>Hora</Form.Label>
-                                <Form.Control type="time" name="hora" value={form.hora} onChange={handleChange} />
-                            </Form.Group>
-                        </Col>
-                        <Col md={4}>
-                            <Form.Group className="mb-3">
-                                <Form.Label>Duración (min)</Form.Label>
                                 <Form.Control
-                                    type="number"
-                                    name="duracion"
-                                    min={10}
-                                    step={5}
-                                    value={form.duracion}
+                                    type="date"
+                                    name="fecha"
+                                    value={form.fecha}
                                     onChange={handleChange}
                                     required
                                 />
                             </Form.Group>
                         </Col>
-                    </Row>
-
-                    <Row>
-                        <Col md={6}>
-                            <Form.Group className="mb-3">
+                        <Col xs={12} md={6} className="mb-2">
+                            <Form.Group>
+                                <Form.Label>Hora</Form.Label>
+                                <Form.Control
+                                    type="time"
+                                    name="hora"
+                                    value={form.hora}
+                                    onChange={handleChange}
+                                />
+                            </Form.Group>
+                        </Col>
+                        <Col xs={12} md={6} className="mb-2">
+                            <Form.Group>
                                 <Form.Label>Tipo</Form.Label>
                                 <Form.Select name="tipo" value={form.tipo} onChange={handleTipoChange}>
                                     <option value="amistoso">Amistoso</option>
@@ -295,11 +324,9 @@ export default function PartidoForm({ onSave, initialData = {}, modoEdicion = fa
                                 </Form.Select>
                             </Form.Group>
                         </Col>
-                        <Col md={6}>
-                            <Form.Group className="mb-3">
-                                <Form.Label>
-                                    Torneo
-                                </Form.Label>
+                        <Col xs={12} md={6}>
+                            <Form.Group className="mb-2">
+                                <Form.Label>Torneo</Form.Label>
                                 {form.tipo === "campeonato" ? (
                                     <InputGroup>
                                         <Form.Select
@@ -351,30 +378,72 @@ export default function PartidoForm({ onSave, initialData = {}, modoEdicion = fa
                             </Form.Group>
                         </Col>
                     </Row>
-
-                    <Row>
-                        <Col md={6}>
-                            <Form.Group className="mb-3">
+                    {/* Fila 2: Rival, Goles a favor, Goles en contra + ruedita */}
+                    <Row className="align-items-end">
+                        <Col xs={12} md={5} className="mb-2">
+                            <Form.Group>
                                 <Form.Label>Rival</Form.Label>
-                                <Form.Control name="rival" value={form.rival} onChange={handleChange} />
+                                <Form.Control
+                                    name="rival"
+                                    value={form.rival}
+                                    onChange={handleChange}
+                                />
                             </Form.Group>
                         </Col>
-                        <Col md={3}>
-                            <Form.Group className="mb-3">
+                        <Col xs={5} md={3} className="mb-2">
+                            <Form.Group>
                                 <Form.Label>Goles a favor</Form.Label>
-                                <Form.Control type="number" name="golesFavor" value={form.golesFavor} onChange={handleChange} />
+                                <Form.Control
+                                    type="number"
+                                    name="golesFavor"
+                                    value={form.golesFavor}
+                                    onChange={handleChange}
+                                />
                             </Form.Group>
                         </Col>
-                        <Col md={3}>
-                            <Form.Group className="mb-3">
+                        <Col xs={5} md={3} className="mb-2">
+                            <Form.Group>
                                 <Form.Label>Goles en contra</Form.Label>
-                                <Form.Control type="number" name="golesContra" value={form.golesContra} onChange={handleChange} />
+                                <Form.Control
+                                    type="number"
+                                    name="golesContra"
+                                    value={form.golesContra}
+                                    onChange={handleChange}
+                                />
                             </Form.Group>
+                        </Col>
+                        <Col xs={2} md={1} className="mb-2 px-2">
+                            <OverlayTrigger
+                                placement="top"
+                                overlay={<Tooltip>Configurar reglas especiales para este partido</Tooltip>}
+                            >
+                                <Button
+                                    variant="link"
+                                    className="p-0 text-white"
+                                    style={{ fontSize: 30 }}
+                                    type="button"
+                                    tabIndex={-1}
+                                    onClick={handleShowConfigModal}
+                                >
+                                    <FaCogs />
+                                </Button>
+                            </OverlayTrigger>
                         </Col>
                     </Row>
-
-                    {/* ...El resto igual... */}
-                    <div className="mb-2 mt-3">
+                    {/* Mostrar la configuración efectiva debajo de la ruedita */}
+                    <div className="mb-2 text-secondary small" style={{ marginTop: -5 }}>
+                        <span>
+                            <FaCogs className="me-1" style={{ fontSize: "1em" }} />
+                            <b>Configuración de partido:</b>
+                            &nbsp;Duración: <b>{configEfectiva.duracion} min</b>,
+                            En cancha: <b>{configEfectiva.jugadoresEnCancha}</b>,
+                            Cambios: <b>{configEfectiva.cambios}</b>,
+                            Reingreso: <b>{configEfectiva.puedeReingresar ? "Sí" : "No"}</b>.
+                            
+                        </span>
+                    </div>
+                    {/* Participaciones */}
+                    <div className="mb-2 mt-4">
                         <h5>Participaciones ({form.participaciones.length}/{jugadoresActivos.length})</h5>
                         <div className="d-flex flex-wrap gap-2">
                             <Button
@@ -397,7 +466,6 @@ export default function PartidoForm({ onSave, initialData = {}, modoEdicion = fa
                             </Button>
                         </div>
                     </div>
-
                     <Table size="sm" bordered hover className="mt-2">
                         <thead>
                             <tr>
@@ -499,7 +567,6 @@ export default function PartidoForm({ onSave, initialData = {}, modoEdicion = fa
                             })}
                         </tbody>
                     </Table>
-
                     <div className="d-flex gap-2 align-items-center mt-3">
                         <Button type="submit" variant={modoEdicion ? "warning" : "primary"}>
                             {modoEdicion ? "Actualizar" : "Registrar partido"}
@@ -517,7 +584,85 @@ export default function PartidoForm({ onSave, initialData = {}, modoEdicion = fa
                     </div>
                 </fieldset>
             </Form>
-
+            {/* MODAL DE CONFIGURACIÓN DE PARTIDO */}
+            <Modal show={showConfigModal} onHide={handleCloseConfigModal} centered>
+                <Modal.Header closeButton>
+                    <Modal.Title>Configurar reglas para este partido</Modal.Title>
+                </Modal.Header>
+                <Modal.Body>
+                    <Form>
+                        <Row>
+                            <Col md={6}>
+                                <Form.Group>
+                                    <Form.Label>Duración (minutos)</Form.Label>
+                                    <Form.Control
+                                        type="number"
+                                        name="duracion"
+                                        value={configForm.duracion}
+                                        min={10}
+                                        max={150}
+                                        step={5}
+                                        onChange={handleConfigChange}
+                                    />
+                                </Form.Group>
+                            </Col>
+                            <Col md={6}>
+                                <Form.Group>
+                                    <Form.Label>Cambios permitidos</Form.Label>
+                                    <Form.Control
+                                        type="number"
+                                        name="cambios"
+                                        value={configForm.cambios}
+                                        min={0}
+                                        max={22}
+                                        onChange={handleConfigChange}
+                                    />
+                                </Form.Group>
+                            </Col>
+                        </Row>
+                        <Row className="mt-2">
+                            <Col md={6}>
+                                <Form.Group>
+                                    <Form.Label>Jugadores en cancha</Form.Label>
+                                    <Form.Control
+                                        type="number"
+                                        name="jugadoresEnCancha"
+                                        value={configForm.jugadoresEnCancha}
+                                        min={5}
+                                        max={22}
+                                        onChange={handleConfigChange}
+                                    />
+                                </Form.Group>
+                            </Col>
+                            <Col md={6} className="d-flex align-items-end">
+                                <Form.Check
+                                    label="Permitir reingreso"
+                                    name="puedeReingresar"
+                                    checked={configForm.puedeReingresar}
+                                    onChange={handleConfigChange}
+                                    type="checkbox"
+                                />
+                            </Col>
+                        </Row>
+                        <div className="mt-3 d-flex justify-content-end">
+                            <Button
+                                variant="outline-secondary"
+                                size="sm"
+                                className="me-2"
+                                onClick={() => setConfigForm({ ...configPorDefecto })}
+                            >
+                                Restaurar por defecto
+                            </Button>
+                        </div>
+                    </Form>
+                </Modal.Body>
+                <Modal.Footer>
+                    <Button variant="secondary" onClick={handleCloseConfigModal}>Cancelar</Button>
+                    <Button variant="success" onClick={handleGuardarConfigPartido}>
+                        Guardar solo para este partido
+                    </Button>
+                </Modal.Footer>
+            </Modal>
             {/* MODAL DE ALTA RÁPIDA DE CAMPEONATO */}
             <Modal show={showModal} onHide={cerrarModal} centered>
                 <Modal.Header closeButton>
