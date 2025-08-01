@@ -292,7 +292,7 @@ export default function PartidoForm({ onSave, initialData = {}, modoEdicion = fa
                         {modoEdicion ? "Editar partido" : "Registrar partido"}
                     </legend>
                     <Row>
-                        <Col xs={12} md={6} className="mb-2">
+                        <Col xs={12} md={6} lg={3} className="mb-2">
                             <Form.Group>
                                 <Form.Label>Fecha</Form.Label>
                                 <Form.Control
@@ -304,7 +304,7 @@ export default function PartidoForm({ onSave, initialData = {}, modoEdicion = fa
                                 />
                             </Form.Group>
                         </Col>
-                        <Col xs={12} md={6} className="mb-2">
+                        <Col xs={12} md={6} lg={2} className="mb-2">
                             <Form.Group>
                                 <Form.Label>Hora</Form.Label>
                                 <Form.Control
@@ -315,7 +315,7 @@ export default function PartidoForm({ onSave, initialData = {}, modoEdicion = fa
                                 />
                             </Form.Group>
                         </Col>
-                        <Col xs={12} md={6} className="mb-2">
+                        <Col xs={12} md={6} lg={3} className="mb-2">
                             <Form.Group>
                                 <Form.Label>Tipo</Form.Label>
                                 <Form.Select name="tipo" value={form.tipo} onChange={handleTipoChange}>
@@ -324,7 +324,7 @@ export default function PartidoForm({ onSave, initialData = {}, modoEdicion = fa
                                 </Form.Select>
                             </Form.Group>
                         </Col>
-                        <Col xs={12} md={6}>
+                        <Col xs={12} md={6} lg={4}>
                             <Form.Group className="mb-2">
                                 <Form.Label>Torneo</Form.Label>
                                 {form.tipo === "campeonato" ? (
@@ -378,8 +378,7 @@ export default function PartidoForm({ onSave, initialData = {}, modoEdicion = fa
                             </Form.Group>
                         </Col>
                     </Row>
-                    {/* Fila 2: Rival, Goles a favor, Goles en contra + ruedita */}
-                    <Row className="align-items-end">
+                    <Row className="align-items-end justify-content-center">
                         <Col xs={12} md={5} className="mb-2">
                             <Form.Group>
                                 <Form.Label>Rival</Form.Label>
@@ -412,7 +411,7 @@ export default function PartidoForm({ onSave, initialData = {}, modoEdicion = fa
                                 />
                             </Form.Group>
                         </Col>
-                        <Col xs={2} md={1} className="mb-2 px-2">
+                        <Col xs={2} md={1} className="mb-2 px-2 text-center">
                             <OverlayTrigger
                                 placement="top"
                                 overlay={<Tooltip>Configurar reglas especiales para este partido</Tooltip>}
@@ -420,7 +419,7 @@ export default function PartidoForm({ onSave, initialData = {}, modoEdicion = fa
                                 <Button
                                     variant="link"
                                     className="p-0 text-white"
-                                    style={{ fontSize: 30 }}
+                                    style={{ fontSize: 32 }}
                                     type="button"
                                     tabIndex={-1}
                                     onClick={handleShowConfigModal}
