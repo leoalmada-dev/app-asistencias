@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useState } from "react";
-import { obtenerEquipos } from "../hooks/useDB";
+import { actualizarEquipo, obtenerEquipos } from "../hooks/useDB";
 
 const EquipoContext = createContext();
 
@@ -22,8 +22,8 @@ export function EquipoProvider({ children }) {
                 : e
             )
         );
-        // Guardalo en tu DB también si lo necesitas (opcional)
-        // await actualizarEquipo(idEquipo, { configPartidos: { ...nuevaConfig } });
+        // Guardá también en la base de datos local
+        await actualizarEquipo(idEquipo, { configPartidos: { ...nuevaConfig } });
     };
 
 

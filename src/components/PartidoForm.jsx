@@ -29,7 +29,7 @@ export default function PartidoForm({ onSave, initialData = {}, modoEdicion = fa
 
     const configPorDefecto = equipo?.configPartidos || {
         duracion: 60,
-        cambios: 7,
+        maxCambios: 7,
         puedeReingresar: true,
         jugadoresEnCancha: 9
     };
@@ -210,10 +210,12 @@ export default function PartidoForm({ onSave, initialData = {}, modoEdicion = fa
             alert("Hay jugadores duplicados en las participaciones.");
             return;
         }
+        const { cambios: _descartar, ...configSinCambios } = configEfectiva; // descarta "cambios" del config
+
         const envio = {
             ...form,
             torneo: form.tipo === "amistoso" ? "Amistoso" : form.torneo,
-            ...configEfectiva // ⬅️ importante
+            ...configSinCambios
         };
         onSave(envio);
 
@@ -438,7 +440,7 @@ export default function PartidoForm({ onSave, initialData = {}, modoEdicion = fa
                             En cancha: <b>{configEfectiva.jugadoresEnCancha}</b>,
                             Cambios: <b>{configEfectiva.cambios}</b>,
                             Reingreso: <b>{configEfectiva.puedeReingresar ? "Sí" : "No"}</b>.
-                            
+
                         </span>
                     </div>
                     {/* Participaciones */}

@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { Form, Button, Row, Col, Alert } from "react-bootstrap";
 
 export default function ConfiguracionPartidosEquipo() {
-    const { equipos, equipoId, setEquipos } = useEquipo();
+    const { equipos, equipoId, setEquipos, actualizarConfigEquipo } = useEquipo();
     const equipo = equipos.find(e => e.id === equipoId);
 
     // Estado local del form (se inicializa cuando cambia el equipo)
@@ -37,7 +37,7 @@ export default function ConfiguracionPartidosEquipo() {
         }));
     };
 
-    const handleGuardar = () => {
+    const handleGuardar = async () => {
         // Actualiza la configuración en memoria
         setEquipos(eqs =>
             eqs.map(eq =>
@@ -46,7 +46,7 @@ export default function ConfiguracionPartidosEquipo() {
                     : eq
             )
         );
-        // TODO: persistir en la DB si corresponde (agregá lógica en hooks/useDB si guardás el objeto completo)
+        await actualizarConfigEquipo(equipoId, form);
         setGuardado(true);
         setTimeout(() => setGuardado(false), 2000);
     };

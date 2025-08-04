@@ -11,9 +11,11 @@ export const CATEGORIAS_POSICION = [
     categoria: "Defensas",
     color: "primary",
     posiciones: [
-      { value: "DC", label: "Defensa central", color: "primary" },
-      { value: "LD", label: "Lateral derecho", color: "primary" },
-      { value: "LI", label: "Lateral izquierdo", color: "primary" }
+      { value: "DC", label: "Defensa Central", color: "primary" },
+      { value: "DCD", label: "Defensa Central Derecho", color: "primary" },
+      { value: "DCI", label: "Defensa Central Izquierdo", color: "primary" },
+      { value: "LD", label: "Lateral Derecho", color: "primary" },
+      { value: "LI", label: "Lateral Izquierdo", color: "primary" }
     ]
   },
   {
@@ -24,6 +26,8 @@ export const CATEGORIAS_POSICION = [
       { value: "MC", label: "MedioCentro", color: "success" },
       { value: "ID", label: "Interior Derecho", color: "success" },
       { value: "II", label: "Interior Izquierdo", color: "success" },
+      { value: "VD", label: "Volante Derecho", color: "success" },
+      { value: "VI", label: "Volante Izquierdo", color: "success" },
       { value: "MCD", label: "MedioCampo Defensivo", color: "success" }
     ]
   },
