@@ -73,12 +73,12 @@ unificar "inactivo" gris
 jugadores activos estan filtrados?
 implementacion de alertas de confirmacion
 ajustar la validacion de participantes en partidos
+en el contexto del eqipo debemos crear una configuracion especial sobre los partidos, la cual va a contener la duracion, la cantidad de cambios, si puede volver a ingresar un jugador q ya salio, cantidad de jugadores en cancha, y tener la posibilidad de ajustar alguno de estas caracteristicas solo par un partido si es necesario a la hora de ingresar un partido, permitiendo en algun amistoso o algun campeonato especial ajustar alguna de estas opciones
 
 agregar FaInfoCircle necesarios (por ahora solo en detalles)
 minutos + descuentos
 calculo de cambios en baby, entrar nuevamente
 pensar bien la compatibilidad de asistencias para baby futbol o la mayor q son convocados
-en el contexto del eqipo debemos crear una configuracion especial sobre los partidos, la cual va a contener la duracion, la cantidad de cambios, si puede volver a ingresar un jugador q ya salio, cantidad de jugadores en cancha, y tener la posibilidad de ajustar alguno de estas caracteristicas solo par un partido si es necesario a la hora de ingresar un partido, permitiendo en algun amistoso o algun campeonato especial ajustar alguna de estas opciones
 registrar tarjetas amarilla y roja en partidos y agregarlas a estadisticas
 validar cambios segun configuracion de partidos del eqipo
 

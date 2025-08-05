@@ -25,8 +25,15 @@ export default function CustomNavbar() {
       onToggle={setExpanded}
     >
       <Container>
-        <Navbar.Brand as={Link} to="/" onClick={handleNavClick}>
-          MiPlantel
+        <Navbar.Brand as={Link} to="/" onClick={handleNavClick} >
+          <img
+            src="/002-negocio-1.png"
+            alt="Logo"
+            width="30"
+            height="30"            className="d-inline-block align-middle me-2 mb-1"
+            style={{ objectFit: "contain" }}
+          />
+          miPlantel
         </Navbar.Brand>
 
         <Navbar.Toggle aria-controls="menu-principal" />
