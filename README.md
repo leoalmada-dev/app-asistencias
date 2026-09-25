@@ -1,7 +1,7 @@
 # ⚽ App de Asistencias y Estadísticas para Fútbol Infantil
 
-**Versión Beta 2.0**  
-*Gestión avanzada y estadísticas para equipos de fútbol infantil. Totalmente offline, profesional, intuitiva y personalizable.*
+**Proyecto personal / experimental — Beta 2.0**  
+Aplicación funcional desarrollada como exploración práctica de una PWA offline-first para gestión y estadísticas de fútbol infantil. No representa mi nivel técnico actual ni se presenta como producto profesional maduro.
 
 ---
 
